@@ -1,5 +1,6 @@
 from pathlib import Path
 import subprocess
+import tomllib
 
 import pytest
 import yaml
@@ -72,6 +73,11 @@ def read_frontmatter(path: Path):
 def test_required_lifecycle_files_exist():
     missing = [path for path in REQUIRED_PATHS if not (ROOT / path).is_file()]
     assert missing == []
+
+
+def test_markdown_scaffold_disables_python_package_auto_discovery():
+    config = tomllib.loads((ROOT / "pyproject.toml").read_text())
+    assert config["tool"]["setuptools"]["packages"] == []
 
 
 @pytest.mark.parametrize("name", AGENTS)
