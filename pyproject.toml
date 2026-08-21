@@ -1,0 +1,13 @@
+[project]
+name = "agentic-development-scaffold"
+version = "0.1.0"
+description = "Markdown-first, agent-ready software development lifecycle scaffold"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=8,<9", "pyyaml>=6,<7"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

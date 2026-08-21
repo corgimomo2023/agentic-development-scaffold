@@ -1,0 +1,101 @@
+schema_version: 1
+feature_id: "{{FEATURE_ID}}"
+title: "{{FEATURE_NAME}}"
+lifecycle_state: INTAKE
+status: DRAFT
+version: 1
+artifacts:
+  proposal: "feature.md"
+  discovery: "discovery.md"
+  design: "design.md"
+  plan: "plan.md"
+  tasks: "tasks.md"
+  acceptance: "acceptance.md"
+  verification: "verification.md"
+  retrospective: "retrospective.md"
+adr_assessment:
+  required: false
+  rationale: "TBD — owner must decide before DESIGN exit"
+owners:
+  orchestrator: unassigned
+  implementer: unassigned
+  spec_reviewer: unassigned
+  quality_reviewer: unassigned
+  security_reviewer: unassigned
+  verifier: unassigned
+evidence:
+  tdd_cycles: "tasks.md#task-001-tdd-evidence"
+  full_suite: "verification.md"
+  verification: "verification.md"
+gates:
+  proposal:
+    owner: unassigned
+    checked_inputs: []
+    result: PENDING
+    evidence: []
+    failure_reason: null
+    next_transition: DISCOVERY
+  discovery:
+    owner: unassigned
+    checked_inputs: []
+    result: PENDING
+    evidence: []
+    failure_reason: null
+    next_transition: DESIGN
+  design:
+    owner: unassigned
+    checked_inputs: []
+    result: PENDING
+    evidence: []
+    failure_reason: null
+    next_transition: PLANNED
+  plan:
+    owner: unassigned
+    checked_inputs: []
+    result: PENDING
+    evidence: []
+    failure_reason: null
+    next_transition: IMPLEMENTING
+  tdd:
+    owner: unassigned
+    checked_inputs: []
+    result: PENDING
+    evidence: []
+    failure_reason: null
+    next_transition: SPEC_REVIEW
+  spec_review:
+    owner: unassigned
+    checked_inputs: []
+    result: PENDING
+    evidence: []
+    failure_reason: null
+    next_transition: QUALITY_SECURITY_REVIEW
+  quality_review:
+    owner: unassigned
+    checked_inputs: []
+    result: PENDING
+    evidence: []
+    failure_reason: null
+    next_transition: QUALITY_SECURITY_REVIEW
+  security_review:
+    owner: unassigned
+    checked_inputs: []
+    result: PENDING
+    evidence: []
+    failure_reason: null
+    next_transition: VERIFYING
+  verification:
+    owner: unassigned
+    checked_inputs: []
+    result: PENDING
+    evidence: []
+    failure_reason: null
+    next_transition: RELEASE_READY
+  release:
+    owner: unassigned
+    checked_inputs: []
+    result: PENDING
+    evidence: []
+    failure_reason: null
+    next_transition: RELEASED
+exceptions_file: exceptions.json
