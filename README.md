@@ -1,6 +1,6 @@
 # Agentic Development Scaffold
 
-A public-safe, Markdown-first software delivery scaffold for humans, GitHub Copilot, and other coding agents. It turns an idea into traceable evidence through proposal, discovery, design, ADRs, bite-sized tasks, strict TDD, independent reviews, verification, release, and knowledge write-back.
+A public-safe, monorepo-ready software delivery scaffold for humans, GitHub Copilot, and other coding agents. It turns an idea into traceable evidence through proposal, discovery, design, ADRs, bite-sized tasks, strict TDD, independent reviews, verification, release, and knowledge write-back.
 
 ## What this repository provides
 
@@ -9,19 +9,22 @@ A public-safe, Markdown-first software delivery scaffold for humans, GitHub Copi
 - `.github/agents/`: specialized custom-agent profiles for GitHub Copilot cloud agent and supported IDE surfaces.
 - `.github/prompts/`: reusable lifecycle slash commands for local VS Code Copilot agents.
 - `.github/instructions/`: path-specific instructions.
+- `apps/`: independently deployable applications such as web, API, and workers.
+- `packages/`: shared libraries, schemas, components, SDKs, and tool configuration.
+- `wiki/`: the consolidated product knowledge control plane and its [canonical index](wiki/index.md).
 - `workflows/`: the complete delivery lifecycle, with entry/exit gates and evidence.
-- `01-product/` to `04-delivery/`: durable product, knowledge, architecture, and delivery records.
 - `scripts/validate_scaffold.py`: zero-dependency structural and safety validator.
 
 ## Start a project
 
 1. Use this repository as a template or copy it into a new repository.
-2. Replace the example feature with your first real feature package.
-3. Add immutable source material to `raw/` and register it in `raw/index.md`.
-4. Start with `.github/prompts/00-intake.prompt.md` or the `orchestrator` agent.
-5. Do not implement until proposal, design, plan, acceptance criteria, and required ADRs pass their gates.
-6. Use strict RED-GREEN-REFACTOR and preserve command output as verification evidence.
-7. Run `python3 scripts/validate_scaffold.py` and `uv run --extra test pytest` before every PR.
+2. Create deployable units under `apps/` and shared code under `packages/` only when it has real consumers.
+3. Replace the example feature with your first real feature package.
+4. Add immutable source material to `wiki/raw/` and register it in `wiki/raw/index.md`.
+5. Start with `.github/prompts/00-intake.prompt.md` or the `orchestrator` agent.
+6. Do not implement until proposal, design, plan, acceptance criteria, and required ADRs pass their gates.
+7. Use strict RED-GREEN-REFACTOR and preserve command output as verification evidence.
+8. Run `python3 scripts/validate_scaffold.py` and `uv run --extra test pytest` before every PR.
 
 ## Lifecycle
 

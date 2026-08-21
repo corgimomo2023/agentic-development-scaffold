@@ -5,8 +5,8 @@ This file is the authoritative repository-wide contract for every human or AI ag
 ## Source-of-truth order
 
 1. Human instruction for the current task.
-2. Approved feature package under `04-delivery/features/`.
-3. Accepted ADRs and current architecture baseline.
+2. Approved feature package under `wiki/delivery/features/`.
+3. Accepted ADRs and current architecture baseline under `wiki/architecture/`.
 4. This `AGENTS.md` and path-specific instructions.
 5. Reusable templates and examples.
 
@@ -41,6 +41,13 @@ A test written after implementation is not RED evidence. Configuration-only or d
 - Unknown facts remain `TBD`; never fabricate product or architecture facts.
 - Prefer simple, maintainable solutions. Apply DRY and YAGNI.
 
+## Monorepo boundaries
+
+- Put independently deployable units under `apps/`.
+- Put shared libraries, schemas, components, SDKs, and tool configuration under `packages/` only when they have real consumers.
+- Keep product, domain, architecture, delivery, and governance knowledge under `wiki/`; update `wiki/index.md` and `wiki/log.md` when durable knowledge changes.
+- A nested `AGENTS.md` may narrow rules for an app or package but cannot weaken this root contract.
+
 ## Delegating subagents
 
 The orchestrator may delegate independent work when the active platform supports subagents. Otherwise it must output ready-to-send dispatch packets.
@@ -70,7 +77,7 @@ For material behavior changes, the implementer, spec reviewer, quality reviewer,
 
 ## Exceptions
 
-No lifecycle control is skipped implicitly. Follow `governance/exception-policy.md`: every exception needs narrow scope, rationale, risk, a named human approver, expiry, and compensating controls. An agent may draft but never approve an exception.
+No lifecycle control is skipped implicitly. Follow `wiki/governance/exception-policy.md`: every exception needs narrow scope, rationale, risk, a named human approver, expiry, and compensating controls. An agent may draft but never approve an exception.
 
 ## Safety boundaries
 

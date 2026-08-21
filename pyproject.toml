@@ -1,7 +1,7 @@
 [project]
 name = "agentic-development-scaffold"
 version = "0.1.0"
-description = "Markdown-first, agent-ready software development lifecycle scaffold"
+description = "Monorepo-ready, agentic software development lifecycle scaffold"
 requires-python = ">=3.11"
 dependencies = []
 

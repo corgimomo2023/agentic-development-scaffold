@@ -11,14 +11,18 @@ REQUIRED_PATHS = [
     "AGENTS.md",
     ".github/copilot-instructions.md",
     ".github/workflows/validate-scaffold.yml",
-    "SCHEMA.md",
-    "index.md",
-    "log.md",
-    "raw/index.md",
-    "04-delivery/features/README.md",
-    "docs/lifecycle/state-machine.md",
-    "docs/lifecycle/gates.md",
-    "docs/lifecycle/delegation.md",
+    "apps/README.md",
+    "packages/README.md",
+    "wiki/README.md",
+    "wiki/SCHEMA.md",
+    "wiki/architecture/decisions/README.md",
+    "wiki/index.md",
+    "wiki/log.md",
+    "wiki/raw/index.md",
+    "wiki/delivery/features/README.md",
+    "wiki/guides/lifecycle/state-machine.md",
+    "wiki/guides/lifecycle/gates.md",
+    "wiki/guides/lifecycle/delegation.md",
     "workflows/00-intake.md",
     "workflows/10-proposal.md",
     "workflows/20-discovery.md",
@@ -75,7 +79,28 @@ def test_required_lifecycle_files_exist():
     assert missing == []
 
 
-def test_markdown_scaffold_disables_python_package_auto_discovery():
+def test_knowledge_control_plane_is_consolidated_under_wiki():
+    assert (ROOT / "wiki/product").is_dir()
+    assert (ROOT / "wiki/knowledge-base").is_dir()
+    assert (ROOT / "wiki/architecture").is_dir()
+    assert (ROOT / "wiki/delivery").is_dir()
+    assert (ROOT / "wiki/governance").is_dir()
+    for legacy_path in (
+        "01-product",
+        "02-knowledge-base",
+        "03-architecture-decisions",
+        "04-delivery",
+        "raw",
+        "docs",
+        "governance",
+        "SCHEMA.md",
+        "index.md",
+        "log.md",
+    ):
+        assert not (ROOT / legacy_path).exists(), legacy_path
+
+
+def test_monorepo_scaffold_disables_python_package_auto_discovery():
     config = tomllib.loads((ROOT / "pyproject.toml").read_text())
     assert config["tool"]["setuptools"]["packages"] == []
 
@@ -116,11 +141,11 @@ def test_path_instructions_declare_apply_to():
 
 def test_feature_control_plane_contracts():
     required = [
-        "governance/exception-policy.md",
-        "governance/traceability-policy.md",
-        "04-delivery/templates/feature/manifest.yaml",
-        "04-delivery/templates/feature/delegations.yaml",
-        "04-delivery/templates/feature/reviews.md",
+        "wiki/governance/exception-policy.md",
+        "wiki/governance/traceability-policy.md",
+        "wiki/delivery/templates/feature/manifest.yaml",
+        "wiki/delivery/templates/feature/delegations.yaml",
+        "wiki/delivery/templates/feature/reviews.md",
     ]
     missing = [path for path in required if not (ROOT / path).is_file()]
     assert missing == []
@@ -149,7 +174,7 @@ def test_feature_control_plane_contracts():
         assert set(gate) == required_gate_fields
         assert gate["result"] in {"PENDING", "PASS", "FAIL", "EXCEPTED"}
     assert set(manifest["evidence"]) >= {"tdd_cycles", "full_suite", "verification"}
-    assert (ROOT / "04-delivery/templates/feature/exceptions.json").is_file()
+    assert (ROOT / "wiki/delivery/templates/feature/exceptions.json").is_file()
 
     delegations = yaml.safe_load((ROOT / required[3]).read_text())
     required_delegation_fields = {
@@ -180,7 +205,7 @@ def test_feature_control_plane_contracts():
 
 
 def test_tdd_and_verification_templates_capture_replayable_evidence():
-    tasks = (ROOT / "04-delivery/templates/feature/tasks.md").read_text()
+    tasks = (ROOT / "wiki/delivery/templates/feature/tasks.md").read_text()
     for field in (
         "Exact command",
         "Expected RED failure",
@@ -194,7 +219,7 @@ def test_tdd_and_verification_templates_capture_replayable_evidence():
     ):
         assert field in tasks
 
-    verification = (ROOT / "04-delivery/templates/feature/verification.md").read_text()
+    verification = (ROOT / "wiki/delivery/templates/feature/verification.md").read_text()
     assert "Timestamp" in verification
 
 

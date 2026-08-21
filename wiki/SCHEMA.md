@@ -2,11 +2,11 @@
 
 ## Intake
 
-Place immutable source evidence in `raw/`. Register source, owner, date, trust level, and intended use in `raw/index.md`. Never rewrite raw evidence; add a newer source or correction note.
+Place immutable source evidence in `wiki/raw/`. Register source, owner, date, trust level, and intended use in `wiki/raw/index.md`. Never rewrite raw evidence; add a newer source or correction note.
 
 ## Durable knowledge
 
-Compile evidence into `02-knowledge-base/` with provenance links. One canonical page exists per concept or business rule. Contradictions remain visible until a human resolves them.
+Compile evidence into `wiki/knowledge-base/` with provenance links. One canonical page exists per concept or business rule. Contradictions remain visible until a human resolves them.
 
 ## Traceability
 

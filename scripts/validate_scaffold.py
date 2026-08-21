@@ -15,21 +15,26 @@ REQUIRED = {
     "AGENTS.md",
     ".github/copilot-instructions.md",
     ".github/workflows/validate-scaffold.yml",
-    "SCHEMA.md",
-    "index.md",
-    "log.md",
-    "raw/index.md",
-    "04-delivery/features/README.md",
-    "docs/lifecycle/state-machine.md",
-    "docs/lifecycle/gates.md",
-    "docs/lifecycle/delegation.md",
-    "governance/exception-policy.md",
-    "governance/traceability-policy.md",
-    "04-delivery/templates/feature/manifest.yaml",
-    "04-delivery/templates/feature/discovery.md",
-    "04-delivery/templates/feature/delegations.yaml",
-    "04-delivery/templates/feature/exceptions.json",
-    "04-delivery/templates/feature/reviews.md",
+    "apps/README.md",
+    "packages/README.md",
+    "wiki/README.md",
+    "wiki/SCHEMA.md",
+    "wiki/architecture/decisions/README.md",
+    "wiki/index.md",
+    "wiki/log.md",
+    "wiki/raw/index.md",
+    "wiki/delivery/features/README.md",
+    "wiki/guides/lifecycle/state-machine.md",
+    "wiki/guides/lifecycle/gates.md",
+    "wiki/guides/lifecycle/delegation.md",
+    "wiki/governance/exception-policy.md",
+    "wiki/governance/security.md",
+    "wiki/governance/traceability-policy.md",
+    "wiki/delivery/templates/feature/manifest.yaml",
+    "wiki/delivery/templates/feature/discovery.md",
+    "wiki/delivery/templates/feature/delegations.yaml",
+    "wiki/delivery/templates/feature/exceptions.json",
+    "wiki/delivery/templates/feature/reviews.md",
     "workflows/00-intake.md",
     "workflows/10-proposal.md",
     "workflows/20-discovery.md",
@@ -246,7 +251,7 @@ def main() -> int:
             if heading not in body:
                 failures.append(f"{path.relative_to(ROOT)}: missing {heading}")
 
-    features_root = ROOT / "04-delivery/features"
+    features_root = ROOT / "wiki/delivery/features"
     for feature_dir in sorted(path for path in features_root.iterdir() if path.is_dir()):
         manifest = feature_dir / "manifest.yaml"
         exceptions = feature_dir / "exceptions.json"
