@@ -23,6 +23,17 @@ def test_forbidden_scanner_allows_placeholders():
     assert VALIDATOR.find_forbidden("API_KEY=${API_KEY}\nTOKEN={{TOKEN}}") == []
 
 
+def test_private_ip_scanner_requires_a_complete_address():
+    private_addresses = (
+        ".".join(("10", "0", "0", "1")),
+        ".".join(("172", "16", "0", "1")),
+        ".".join(("192", "168", "1", "1")),
+    )
+    for address in private_addresses:
+        assert "private IPv4 address" in VALIDATOR.find_forbidden(address)
+    assert VALIDATOR.find_forbidden("10. Human approval remains mandatory.") == []
+
+
 def test_exception_records_require_human_approval_expiry_and_controls():
     valid = {
         "exception_id": "EXC-001",

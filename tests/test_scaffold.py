@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import subprocess
 import tomllib
 
@@ -10,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_PATHS = [
     "AGENTS.md",
     ".github/copilot-instructions.md",
+    ".github/dependabot.yml",
     ".github/workflows/validate-scaffold.yml",
     "apps/README.md",
     "packages/README.md",
@@ -39,32 +41,121 @@ REQUIRED_PATHS = [
 AGENTS = [
     "orchestrator",
     "product-manager",
+    "discovery-analyst",
     "architect",
     "implementation-planner",
     "tdd-developer",
+    "debugger",
     "test-specialist",
+    "accessibility-reviewer",
     "security-reviewer",
     "spec-reviewer",
     "code-reviewer",
+    "operational-readiness-reviewer",
     "release-verifier",
     "knowledge-curator",
 ]
+
+AGENT_TOOLS = {
+    "orchestrator": ["read", "search", "agent", "todo"],
+    "product-manager": ["read", "search"],
+    "discovery-analyst": ["read", "search", "web"],
+    "architect": ["read", "search"],
+    "implementation-planner": ["read", "search"],
+    "tdd-developer": ["read", "search", "edit", "execute"],
+    "debugger": ["read", "search", "edit", "execute"],
+    "test-specialist": ["read", "search", "edit", "execute"],
+    "accessibility-reviewer": ["read", "search", "execute"],
+    "security-reviewer": ["read", "search", "execute"],
+    "spec-reviewer": ["read", "search", "execute"],
+    "code-reviewer": ["read", "search", "execute"],
+    "operational-readiness-reviewer": ["read", "search", "execute"],
+    "release-verifier": ["read", "search", "execute"],
+    "knowledge-curator": ["read", "search", "edit", "execute"],
+}
 
 PROMPTS = [
     "00-intake",
     "10-proposal",
     "15-discovery",
     "20-design",
+    "25-threat-model",
     "30-adr",
     "40-plan",
+    "45-test-strategy",
     "50-implement-tdd",
+    "55-debug",
     "60-delegate-subagents",
     "70-spec-review",
     "80-quality-security-review",
     "82-security-review",
+    "85-operational-readiness",
     "90-verify-release",
+    "92-knowledge-writeback",
     "95-retrospective",
 ]
+
+PROMPT_AGENTS = {
+    "00-intake": "orchestrator",
+    "10-proposal": "product-manager",
+    "15-discovery": "discovery-analyst",
+    "20-design": "architect",
+    "25-threat-model": "security-reviewer",
+    "30-adr": "architect",
+    "40-plan": "implementation-planner",
+    "45-test-strategy": "test-specialist",
+    "50-implement-tdd": "tdd-developer",
+    "55-debug": "debugger",
+    "60-delegate-subagents": "orchestrator",
+    "70-spec-review": "spec-reviewer",
+    "80-quality-security-review": "orchestrator",
+    "82-security-review": "security-reviewer",
+    "85-operational-readiness": "operational-readiness-reviewer",
+    "90-verify-release": "release-verifier",
+    "92-knowledge-writeback": "knowledge-curator",
+    "95-retrospective": "orchestrator",
+}
+
+CANONICAL_LIFECYCLE = (
+    "intake -> proposal -> discovery -> design/ADR -> plan/tasks -> "
+    "TDD implementation -> spec review -> quality/security review -> "
+    "verification -> release -> retrospective/knowledge write-back"
+)
+
+INSTRUCTIONS = {
+    "agents",
+    "apps",
+    "documentation",
+    "packages",
+    "prompts",
+    "security-sensitive",
+    "source",
+    "tests",
+    "wiki",
+    "workflows",
+}
+
+AGENT_SECTIONS = (
+    "## Mission",
+    "## When to use this agent",
+    "## Responsibilities",
+    "## Inputs",
+    "## Workflow",
+    "## Decision rules",
+    "## Output contract",
+    "## Guardrails",
+    "## Handoff",
+    "## Completion criteria",
+)
+
+PROMPT_SECTIONS = (
+    "## Inputs",
+    "## Preconditions",
+    "## Procedure",
+    "## Required output",
+    "## Validation",
+    "## Stop conditions",
+)
 
 
 def read_frontmatter(path: Path):
@@ -103,6 +194,7 @@ def test_knowledge_control_plane_is_consolidated_under_wiki():
 def test_monorepo_scaffold_disables_python_package_auto_discovery():
     config = tomllib.loads((ROOT / "pyproject.toml").read_text())
     assert config["tool"]["setuptools"]["packages"] == []
+    assert "*.egg-info/" in (ROOT / ".gitignore").read_text()
 
 
 @pytest.mark.parametrize("name", AGENTS)
@@ -112,9 +204,10 @@ def test_agent_profiles_have_contract(name):
     metadata, body = read_frontmatter(path)
     assert metadata["name"] == name
     assert metadata["description"]
-    assert isinstance(metadata["tools"], list)
-    assert set(metadata["tools"]) <= {"read", "search", "edit", "execute"}
-    for heading in ("## Responsibilities", "## Inputs", "## Outputs", "## Guardrails", "## Handoff"):
+    assert metadata["tools"] == AGENT_TOOLS[name]
+    assert "target" not in metadata  # portable across GitHub and supported IDE surfaces
+    assert len(body.splitlines()) >= 60
+    for heading in AGENT_SECTIONS:
         assert heading in body
 
 
@@ -123,20 +216,153 @@ def test_prompt_files_are_agent_ready(name):
     path = ROOT / ".github/prompts" / f"{name}.prompt.md"
     assert path.is_file()
     metadata, body = read_frontmatter(path)
+    assert metadata["name"] == name
     assert metadata["description"]
-    assert metadata["agent"]
-    assert "## Inputs" in body
-    assert "## Required output" in body
-    assert "## Stop conditions" in body
+    assert metadata["agent"] == PROMPT_AGENTS[name]
+    assert metadata["argument-hint"]
+    assert len(body.splitlines()) >= 40
+    for heading in PROMPT_SECTIONS:
+        assert heading in body
+
+
+def test_customization_catalogs_are_exact_not_minimum_counts():
+    agent_files = {
+        path.name.removesuffix(".agent.md")
+        for path in (ROOT / ".github/agents").glob("*.agent.md")
+    }
+    prompt_files = {
+        path.name.removesuffix(".prompt.md")
+        for path in (ROOT / ".github/prompts").glob("*.prompt.md")
+    }
+    assert agent_files == set(AGENT_TOOLS)
+    assert prompt_files == set(PROMPT_AGENTS)
+
+
+def test_source_hierarchy_and_lifecycle_match_root_contract():
+    agents = (ROOT / "AGENTS.md").read_text()
+    copilot = (ROOT / ".github/copilot-instructions.md").read_text()
+    assert CANONICAL_LIFECYCLE in agents
+    assert CANONICAL_LIFECYCLE in copilot
+    assert copilot.index("Approved feature package") < copilot.index("Root `AGENTS.md`")
+    assert copilot.index("Accepted ADRs") < copilot.index("Root `AGENTS.md`")
+
+
+def test_early_phase_prompts_do_not_block_on_outputs_they_create():
+    cases = {
+        "00-intake": "Do not block merely because proposal scope or acceptance criteria do not exist yet.",
+        "10-proposal": "Do not block merely because scope or acceptance criteria do not exist yet; creating them is this prompt's job.",
+        "15-discovery": "Do not require feature acceptance criteria to begin evidence gathering.",
+    }
+    for name, required in cases.items():
+        text = (ROOT / ".github/prompts" / f"{name}.prompt.md").read_text()
+        assert required in text
+        assert "Stop if scope, acceptance criteria, canonical source, or authority is missing." not in text
+
+
+def test_read_only_roles_handoff_mutation_and_execution_evidence():
+    adr = (ROOT / ".github/prompts/30-adr.prompt.md").read_text()
+    discovery = (ROOT / ".github/agents/discovery-analyst.agent.md").read_text()
+    discovery_prompt = (ROOT / ".github/prompts/15-discovery.prompt.md").read_text()
+    assert "ADR draft" in adr
+    assert "knowledge-curator" in adr
+    assert "Write or update a numbered ADR" not in adr
+    assert "update the raw index" not in discovery
+    assert "Search repository history" not in discovery
+    assert "Store raw evidence" not in discovery
+    assert "knowledge-curator" in discovery
+    assert "If `web` is unavailable" in discovery_prompt
+    for agent in (
+        "product-manager",
+        "discovery-analyst",
+        "architect",
+        "implementation-planner",
+    ):
+        assert "execute" not in AGENT_TOOLS[agent]
+
+
+def test_post_release_writeback_does_not_mutate_verified_candidate():
+    prompt = (ROOT / ".github/prompts/92-knowledge-writeback.prompt.md").read_text()
+    curator = (ROOT / ".github/agents/knowledge-curator.agent.md").read_text()
+    assert "post-release" in prompt.lower()
+    assert "must not alter the released revision" in prompt
+    assert "new documentation-only candidate" in prompt
+    assert "inclusion in the release candidate" not in curator
 
 
 def test_path_instructions_declare_apply_to():
     paths = sorted((ROOT / ".github/instructions").glob("*.instructions.md"))
-    assert len(paths) >= 4
+    assert {path.name.removesuffix(".instructions.md") for path in paths} == INSTRUCTIONS
     for path in paths:
         metadata, body = read_frontmatter(path)
         assert metadata["applyTo"]
         assert body.strip()
+
+
+def test_github_customization_catalogs_are_documented():
+    for path in (
+        ROOT / ".github/agents/README.md",
+        ROOT / ".github/prompts/README.md",
+        ROOT / ".github/instructions/README.md",
+    ):
+        assert path.is_file()
+        text = path.read_text()
+        assert len(text.splitlines()) >= 25
+
+
+def test_repository_instructions_cover_monorepo_and_agentic_controls():
+    text = (ROOT / ".github/copilot-instructions.md").read_text().lower()
+    for phrase in (
+        "source-of-truth",
+        "apps/",
+        "packages/",
+        "wiki/",
+        "red-green-refactor",
+        "independent review",
+        "human approval",
+        "verification evidence",
+        "public repository",
+    ):
+        assert phrase in text
+    assert len(text.splitlines()) >= 100
+
+
+def test_validation_workflow_is_least_privilege_and_supply_chain_pinned():
+    text = (ROOT / ".github/workflows/validate-scaffold.yml").read_text()
+    assert "permissions:\n  contents: read" in text
+    assert "concurrency:" in text
+    assert "timeout-minutes:" in text
+    assert "persist-credentials: false" in text
+    uses = re.findall(r"uses:\s+([^\s#]+)", text)
+    assert uses
+    for action in uses:
+        assert re.search(r"@[0-9a-f]{40}$", action), action
+
+
+def test_dependabot_maintains_actions_and_python_dependencies():
+    config = yaml.safe_load((ROOT / ".github/dependabot.yml").read_text())
+    ecosystems = {entry["package-ecosystem"] for entry in config["updates"]}
+    assert ecosystems == {"github-actions", "pip"}
+    for entry in config["updates"]:
+        assert entry["schedule"]["interval"] == "monthly"
+        assert entry["open-pull-requests-limit"] <= 5
+
+
+def test_pull_request_template_requires_evidence_and_independent_gates():
+    text = (ROOT / ".github/pull_request_template.md").read_text().lower()
+    for phrase in (
+        "why this change is needed",
+        "explicitly excluded",
+        "red",
+        "focused green",
+        "specification review pass",
+        "security review pass",
+        "accessibility review pass",
+        "operational-readiness review pass",
+        "public repository safety",
+        "rollback",
+        "human decisions",
+    ):
+        assert phrase in text
 
 
 def test_feature_control_plane_contracts():

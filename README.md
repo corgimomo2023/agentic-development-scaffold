@@ -5,10 +5,11 @@ A public-safe, monorepo-ready software delivery scaffold for humans, GitHub Copi
 ## What this repository provides
 
 - `AGENTS.md`: repository-wide operating contract for humans and agents.
-- `.github/copilot-instructions.md`: concise GitHub Copilot guidance.
-- `.github/agents/`: specialized custom-agent profiles for GitHub Copilot cloud agent and supported IDE surfaces.
-- `.github/prompts/`: reusable lifecycle slash commands for local VS Code Copilot agents.
-- `.github/instructions/`: path-specific instructions.
+- `.github/copilot-instructions.md`: comprehensive repository, lifecycle, evidence, safety, and handoff contract.
+- `.github/agents/`: [15 specialist profiles](.github/agents/README.md) with least-privilege tools and explicit role boundaries.
+- `.github/prompts/`: [18 reusable lifecycle prompts](.github/prompts/README.md) from intake through retrospective.
+- `.github/instructions/`: [10 path-specific contracts](.github/instructions/README.md) for apps, packages, wiki, tests, workflows, and customization files.
+- `.github/workflows/` and `.github/dependabot.yml`: least-privilege validation plus bounded dependency maintenance.
 - `apps/`: independently deployable applications such as web, API, and workers.
 - `packages/`: shared libraries, schemas, components, SDKs, and tool configuration.
 - `wiki/`: the consolidated product knowledge control plane and its [canonical index](wiki/index.md).
@@ -53,9 +54,11 @@ Agents may analyze, propose, edit, test, and review within an approved task. Hum
 
 GitHub Copilot cloud agent consumes repository instructions and `.github/agents/*.agent.md` profiles. VS Code local agents additionally discover `.github/prompts/*.prompt.md` as explicit slash commands; current Agent Host cloud runs do not consume prompt files. The Markdown lifecycle under `workflows/` remains the vendor-neutral source, so a workflow is not lost when a Copilot surface lacks prompt-file support.
 
+The design rationale and commit-pinned public repository comparison are recorded in [GitHub Copilot customization research](wiki/knowledge-base/copilot-customization-research.md).
+
 Official references:
 
-- [GitHub: repository custom instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot)
+- [GitHub: repository custom instructions](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions)
 - [GitHub: custom agents for Copilot cloud agent](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/create-custom-agents)
 - [VS Code: prompt files](https://code.visualstudio.com/docs/agent-customization/prompt-files)
 

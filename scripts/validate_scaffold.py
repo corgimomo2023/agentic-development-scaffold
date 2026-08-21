@@ -14,6 +14,10 @@ ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = {
     "AGENTS.md",
     ".github/copilot-instructions.md",
+    ".github/dependabot.yml",
+    ".github/agents/README.md",
+    ".github/prompts/README.md",
+    ".github/instructions/README.md",
     ".github/workflows/validate-scaffold.yml",
     "apps/README.md",
     "packages/README.md",
@@ -48,9 +52,94 @@ REQUIRED = {
     ".github/prompts/15-discovery.prompt.md",
 }
 
-AGENT_HEADINGS = ("## Responsibilities", "## Inputs", "## Outputs", "## Guardrails", "## Handoff")
-PROMPT_HEADINGS = ("## Inputs", "## Required output", "## Stop conditions")
+AGENT_HEADINGS = (
+    "## Mission",
+    "## When to use this agent",
+    "## Responsibilities",
+    "## Inputs",
+    "## Workflow",
+    "## Decision rules",
+    "## Output contract",
+    "## Guardrails",
+    "## Handoff",
+    "## Completion criteria",
+)
+PROMPT_HEADINGS = (
+    "## Inputs",
+    "## Preconditions",
+    "## Procedure",
+    "## Required output",
+    "## Validation",
+    "## Stop conditions",
+)
+AGENT_TOOLS = {
+    "orchestrator": "['read', 'search', 'agent', 'todo']",
+    "product-manager": "['read', 'search']",
+    "discovery-analyst": "['read', 'search', 'web']",
+    "architect": "['read', 'search']",
+    "implementation-planner": "['read', 'search']",
+    "tdd-developer": "['read', 'search', 'edit', 'execute']",
+    "debugger": "['read', 'search', 'edit', 'execute']",
+    "test-specialist": "['read', 'search', 'edit', 'execute']",
+    "accessibility-reviewer": "['read', 'search', 'execute']",
+    "security-reviewer": "['read', 'search', 'execute']",
+    "spec-reviewer": "['read', 'search', 'execute']",
+    "code-reviewer": "['read', 'search', 'execute']",
+    "operational-readiness-reviewer": "['read', 'search', 'execute']",
+    "release-verifier": "['read', 'search', 'execute']",
+    "knowledge-curator": "['read', 'search', 'edit', 'execute']",
+}
+PROMPT_AGENTS = {
+    "00-intake": "orchestrator",
+    "10-proposal": "product-manager",
+    "15-discovery": "discovery-analyst",
+    "20-design": "architect",
+    "25-threat-model": "security-reviewer",
+    "30-adr": "architect",
+    "40-plan": "implementation-planner",
+    "45-test-strategy": "test-specialist",
+    "50-implement-tdd": "tdd-developer",
+    "55-debug": "debugger",
+    "60-delegate-subagents": "orchestrator",
+    "70-spec-review": "spec-reviewer",
+    "80-quality-security-review": "orchestrator",
+    "82-security-review": "security-reviewer",
+    "85-operational-readiness": "operational-readiness-reviewer",
+    "90-verify-release": "release-verifier",
+    "92-knowledge-writeback": "knowledge-curator",
+    "95-retrospective": "orchestrator",
+}
+CANONICAL_LIFECYCLE = (
+    "intake -> proposal -> discovery -> design/ADR -> plan/tasks -> "
+    "TDD implementation -> spec review -> quality/security review -> "
+    "verification -> release -> retrospective/knowledge write-back"
+)
+INSTRUCTIONS = {
+    "agents",
+    "apps",
+    "documentation",
+    "packages",
+    "prompts",
+    "security-sensitive",
+    "source",
+    "tests",
+    "wiki",
+    "workflows",
+}
 WORKFLOW_HEADINGS = ("## Entry criteria", "## Activities", "## Required artifacts", "## Exit evidence", "## Failure and revision")
+
+LEGACY_ROOT_PATHS = (
+    "01-product",
+    "02-knowledge-base",
+    "03-architecture-decisions",
+    "04-delivery",
+    "raw",
+    "docs",
+    "governance",
+    "SCHEMA.md",
+    "index.md",
+    "log.md",
+)
 
 FORBIDDEN = {
     "private key": re.compile(r"BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY"),
@@ -59,7 +148,11 @@ FORBIDDEN = {
     "generic API secret": re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b"),
     "personal home path": re.compile(r"/(?:home|Users)/[A-Za-z0-9._-]+/"),
     "private IPv4 address": re.compile(
-        r"(?<![0-9])(?:10\.|192\.168\.|172\.(?:1[6-9]|2[0-9]|3[01])\.)"
+        r"(?<![0-9])(?:"
+        r"10(?:\.(?:25[0-5]|2[0-4][0-9]|1?[0-9]?[0-9])){3}|"
+        r"192\.168(?:\.(?:25[0-5]|2[0-4][0-9]|1?[0-9]?[0-9])){2}|"
+        r"172\.(?:1[6-9]|2[0-9]|3[01])(?:\.(?:25[0-5]|2[0-4][0-9]|1?[0-9]?[0-9])){2}"
+        r")(?![0-9])"
     ),
     "private hostname": re.compile(r"\b[a-z0-9-]+\.(?:internal|local|corp)\b", re.IGNORECASE),
     "credential assignment": re.compile(
@@ -184,6 +277,10 @@ def main() -> int:
         if not (ROOT / name).is_file():
             failures.append(f"missing required file: {name}")
 
+    for name in LEGACY_ROOT_PATHS:
+        if (ROOT / name).exists():
+            failures.append(f"legacy root path must not exist: {name}")
+
     text_files = collect_text_files()
     for path, text in text_files:
         rel = path.relative_to(ROOT)
@@ -198,8 +295,9 @@ def main() -> int:
         failures.extend(validate_links(path, text))
 
     agents = sorted((ROOT / ".github/agents").glob("*.agent.md"))
-    if len(agents) < 11:
-        failures.append("expected at least 11 custom agent profiles")
+    agent_names = {path.name.removesuffix(".agent.md") for path in agents}
+    if agent_names != set(AGENT_TOOLS):
+        failures.append("custom agent catalog must exactly match the governed role matrix")
     for path in agents:
         try:
             metadata, body = parse_frontmatter(path)
@@ -210,32 +308,42 @@ def main() -> int:
             failures.append(f"{path.relative_to(ROOT)}: name must match filename")
         if not metadata.get("description"):
             failures.append(f"{path.relative_to(ROOT)}: description is required")
+        expected_tools = AGENT_TOOLS.get(path.name.removesuffix(".agent.md"))
+        if metadata.get("tools") != expected_tools:
+            failures.append(f"{path.relative_to(ROOT)}: tools must match governed least-privilege matrix")
+        if len(body.splitlines()) < 60:
+            failures.append(f"{path.relative_to(ROOT)}: agent contract must be at least 60 lines")
         for heading in AGENT_HEADINGS:
             if heading not in body:
                 failures.append(f"{path.relative_to(ROOT)}: missing {heading}")
-    agent_names = {path.name.removesuffix(".agent.md") for path in agents}
-
     prompts = sorted((ROOT / ".github/prompts").glob("*.prompt.md"))
-    if len(prompts) < 13:
-        failures.append("expected at least 13 lifecycle prompt files")
+    prompt_names = {path.name.removesuffix(".prompt.md") for path in prompts}
+    if prompt_names != set(PROMPT_AGENTS):
+        failures.append("lifecycle prompt catalog must exactly match the governed prompt matrix")
     for path in prompts:
         try:
             metadata, body = parse_frontmatter(path)
         except ValueError as exc:
             failures.append(f"{path.relative_to(ROOT)}: {exc}")
             continue
-        for key in ("description", "agent"):
+        prompt_name = path.name.removesuffix(".prompt.md")
+        if metadata.get("name") != prompt_name:
+            failures.append(f"{path.relative_to(ROOT)}: name must match filename")
+        for key in ("description", "argument-hint", "agent"):
             if not metadata.get(key):
                 failures.append(f"{path.relative_to(ROOT)}: {key} is required")
-        if metadata.get("agent") not in agent_names:
-            failures.append(f"{path.relative_to(ROOT)}: agent must reference a custom agent")
+        if metadata.get("agent") != PROMPT_AGENTS.get(prompt_name):
+            failures.append(f"{path.relative_to(ROOT)}: agent must match governed prompt-role matrix")
         for heading in PROMPT_HEADINGS:
             if heading not in body:
                 failures.append(f"{path.relative_to(ROOT)}: missing {heading}")
+        if len(body.splitlines()) < 40:
+            failures.append(f"{path.relative_to(ROOT)}: prompt contract must be at least 40 lines")
 
     instructions = sorted((ROOT / ".github/instructions").glob("*.instructions.md"))
-    if len(instructions) < 4:
-        failures.append("expected at least four path-specific instruction files")
+    instruction_names = {path.name.removesuffix(".instructions.md") for path in instructions}
+    if instruction_names != INSTRUCTIONS:
+        failures.append("path-specific instruction catalog must exactly match the governed matrix")
     for path in instructions:
         try:
             metadata, _ = parse_frontmatter(path)
@@ -269,6 +377,9 @@ def main() -> int:
             failures.append(f"{exceptions.relative_to(ROOT)}: {error}")
 
     contract = (ROOT / "AGENTS.md").read_text(encoding="utf-8") if (ROOT / "AGENTS.md").exists() else ""
+    copilot_contract = (ROOT / ".github/copilot-instructions.md").read_text(encoding="utf-8") if (ROOT / ".github/copilot-instructions.md").exists() else ""
+    if CANONICAL_LIFECYCLE not in contract or CANONICAL_LIFECYCLE not in copilot_contract:
+        failures.append("AGENTS.md and Copilot instructions must share the canonical lifecycle string")
     for phrase in (
         "RED evidence",
         "Spec-compliance reviewer",
