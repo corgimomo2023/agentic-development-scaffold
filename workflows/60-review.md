@@ -8,11 +8,12 @@
 
 ## Activities
 
-Run independent requirement-by-requirement spec review. After spec PASS, run separate correctness/maintainability/test-quality review and security/threat review with different assignments.
+Run independent requirement-by-requirement spec review. After spec PASS, run separate correctness/maintainability/test-quality review and security/threat review with different assignments. Trigger independent accessibility and operational-readiness reviews when the change meets their conditions; otherwise record `NOT_APPLICABLE` with concrete scope rationale.
 
 ## Required artifacts
 
-- Two ordered pass verdicts with evidence.
+- Ordered spec, quality, and security PASS verdicts with evidence.
+- Accessibility and operational-readiness PASS or justified `NOT_APPLICABLE` verdicts for the same revision.
 - Updated feature status and traceability links.
 - Gate record with owner and timestamp.
 

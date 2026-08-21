@@ -91,8 +91,8 @@ PROMPTS = [
     "82-security-review",
     "85-operational-readiness",
     "90-verify-release",
-    "92-knowledge-writeback",
     "95-retrospective",
+    "97-knowledge-writeback",
 ]
 
 PROMPT_AGENTS = {
@@ -112,14 +112,14 @@ PROMPT_AGENTS = {
     "82-security-review": "security-reviewer",
     "85-operational-readiness": "operational-readiness-reviewer",
     "90-verify-release": "release-verifier",
-    "92-knowledge-writeback": "knowledge-curator",
     "95-retrospective": "orchestrator",
+    "97-knowledge-writeback": "knowledge-curator",
 }
 
 CANONICAL_LIFECYCLE = (
     "intake -> proposal -> discovery -> design/ADR -> plan/tasks -> "
     "TDD implementation -> spec review -> quality/security review -> "
-    "verification -> release -> retrospective/knowledge write-back"
+    "verification -> release -> retrospective -> knowledge write-back"
 )
 
 INSTRUCTIONS = {
@@ -133,6 +133,22 @@ INSTRUCTIONS = {
     "tests",
     "wiki",
     "workflows",
+}
+
+FEATURE_PACKAGE_FILES = {
+    "manifest.yaml",
+    "feature.md",
+    "use-cases.md",
+    "discovery.md",
+    "design.md",
+    "plan.md",
+    "tasks.md",
+    "acceptance.md",
+    "verification.md",
+    "reviews.md",
+    "retrospective.md",
+    "delegations.yaml",
+    "exceptions.json",
 }
 
 AGENT_SECTIONS = (
@@ -241,10 +257,14 @@ def test_customization_catalogs_are_exact_not_minimum_counts():
 def test_source_hierarchy_and_lifecycle_match_root_contract():
     agents = (ROOT / "AGENTS.md").read_text()
     copilot = (ROOT / ".github/copilot-instructions.md").read_text()
+    instruction_catalog = (ROOT / ".github/instructions/README.md").read_text()
     assert CANONICAL_LIFECYCLE in agents
     assert CANONICAL_LIFECYCLE in copilot
     assert copilot.index("Approved feature package") < copilot.index("Root `AGENTS.md`")
     assert copilot.index("Accepted ADRs") < copilot.index("Root `AGENTS.md`")
+    assert instruction_catalog.index("Approved feature package") < instruction_catalog.index("Root `AGENTS.md`")
+    assert instruction_catalog.index("Accepted ADRs") < instruction_catalog.index("Root `AGENTS.md`")
+    assert "The narrowest applicable rule wins" not in instruction_catalog
 
 
 def test_early_phase_prompts_do_not_block_on_outputs_they_create():
@@ -281,12 +301,157 @@ def test_read_only_roles_handoff_mutation_and_execution_evidence():
 
 
 def test_post_release_writeback_does_not_mutate_verified_candidate():
-    prompt = (ROOT / ".github/prompts/92-knowledge-writeback.prompt.md").read_text()
+    prompt = (ROOT / ".github/prompts/97-knowledge-writeback.prompt.md").read_text()
     curator = (ROOT / ".github/agents/knowledge-curator.agent.md").read_text()
     assert "post-release" in prompt.lower()
     assert "must not alter the released revision" in prompt
     assert "new documentation-only candidate" in prompt
     assert "inclusion in the release candidate" not in curator
+
+
+def test_retrospective_precedes_post_release_knowledge_writeback():
+    catalog = (ROOT / ".github/prompts/README.md").read_text()
+    assert catalog.index("`95-retrospective`") < catalog.index("`97-knowledge-writeback`")
+
+
+def test_example_feature_package_is_complete():
+    expected = {
+        "manifest.yaml",
+        "feature.md",
+        "use-cases.md",
+        "discovery.md",
+        "design.md",
+        "plan.md",
+        "tasks.md",
+        "acceptance.md",
+        "verification.md",
+        "reviews.md",
+        "retrospective.md",
+        "delegations.yaml",
+        "exceptions.json",
+    }
+    actual = {path.name for path in (ROOT / "examples/feature-package").iterdir() if path.is_file()}
+    assert actual == expected
+
+
+def test_canonical_roles_and_conditional_gates_cover_agent_catalog():
+    roles = (ROOT / "wiki/guides/lifecycle/roles.md").read_text()
+    state_machine = (ROOT / "wiki/guides/lifecycle/state-machine.md").read_text()
+    for role in (
+        "Orchestrator",
+        "Product manager",
+        "Discovery analyst",
+        "Architect",
+        "Implementation planner",
+        "TDD developer",
+        "Debugger",
+        "Test specialist",
+        "Spec reviewer",
+        "Code reviewer",
+        "Security reviewer",
+        "Accessibility reviewer",
+        "Operational readiness reviewer",
+        "Release verifier",
+        "Knowledge curator",
+    ):
+        assert f"| {role} |" in roles
+    assert "| DISCOVERY | Discovery analyst / product manager |" in state_machine
+    assert "Knowledge curator persists" in state_machine
+
+    required_owners = {
+        "orchestrator",
+        "product_manager",
+        "discovery_analyst",
+        "architect",
+        "implementation_planner",
+        "implementer",
+        "debugger",
+        "test_specialist",
+        "spec_reviewer",
+        "quality_reviewer",
+        "security_reviewer",
+        "accessibility_reviewer",
+        "operational_readiness_reviewer",
+        "verifier",
+        "knowledge_curator",
+    }
+    required_gates = {"accessibility_review", "operational_readiness_review"}
+    manifest_expectations = {
+        ROOT / "wiki/delivery/templates/feature/manifest.yaml": ("UNASSESSED", "PENDING"),
+        ROOT / "examples/feature-package/manifest.yaml": ("NOT_APPLICABLE", "PENDING"),
+    }
+    for path, (applicability, result) in manifest_expectations.items():
+        data = yaml.safe_load(path.read_text())
+        assert required_owners <= set(data["owners"])
+        assert required_gates <= set(data["gates"])
+        for gate in required_gates:
+            assert data["gates"][gate]["applicability"] == applicability
+            assert data["gates"][gate]["result"] == result
+
+    for path in (
+        ROOT / "wiki/delivery/templates/feature/reviews.md",
+        ROOT / "examples/feature-package/reviews.md",
+    ):
+        text = path.read_text()
+        assert "## Accessibility review" in text
+        assert "## Operational readiness review" in text
+        assert "PASS, FAIL, or NOT_APPLICABLE" in text
+
+
+def test_retrospective_completes_before_knowledge_writeback():
+    prompt = (ROOT / ".github/prompts/95-retrospective.prompt.md").read_text()
+    workflow = (ROOT / "workflows/90-retrospective.md").read_text()
+    assert "Write durable learning through the knowledge curator" not in prompt
+    assert "Knowledge-writeback references" not in prompt
+    assert "Knowledge-writeback handoff packet" in prompt
+    assert "do not update canonical knowledge" in prompt
+    assert "Do not mutate canonical knowledge" in workflow
+    assert "next required step is `97-knowledge-writeback`" in workflow
+    assert "Next permitted state: `CLOSED`" not in workflow
+
+
+def test_example_package_is_semantically_replayable_and_self_consistent():
+    package = ROOT / "examples/feature-package"
+    manifest = yaml.safe_load((package / "manifest.yaml").read_text())
+    assert manifest["lifecycle_state"] == "IMPLEMENTING"
+    assert not manifest["adr_assessment"]["rationale"].upper().startswith("TBD")
+    assert set(manifest["artifacts"].values()) == FEATURE_PACKAGE_FILES - {"manifest.yaml"}
+    tasks = (package / "tasks.md").read_text()
+    for field in (
+        "## TASK-001 TDD evidence",
+        "Exact files",
+        "Exact command",
+        "Expected RED failure",
+        "Actual RED result / exit status",
+        "GREEN result / exit status",
+        "Full-suite evidence",
+        "Environment",
+        "Artifact/link",
+        "Dependencies",
+        "Risks",
+        "Commit boundary",
+    ):
+        assert field in tasks
+    assert "uv run --frozen --extra test" in tasks
+    assert "no repository or external-system state is changed" not in (package / "use-cases.md").read_text()
+    acceptance = (package / "acceptance.md").read_text()
+    assert "download only dependencies already locked in `uv.lock`" in acceptance
+    delegations = (package / "delegations.yaml").read_text()
+    assert "TASK-002 owns test-failure orchestration" in delegations
+
+
+def test_agent_guardrails_stop_on_contract_conflict_without_specificity_winner():
+    for path in (ROOT / ".github/agents").glob("*.agent.md"):
+        text = path.read_text()
+        assert "narrowest applicable" not in text
+        assert "stop and escalate instead of selecting a winner" in text
+    for path in (
+        ROOT / "AGENTS.md",
+        ROOT / ".github/copilot-instructions.md",
+        ROOT / ".github/instructions/README.md",
+    ):
+        text = path.read_text()
+        assert "path specificity does not select a winner" in text or "most-specific-wins" in text
 
 
 def test_path_instructions_declare_apply_to():
@@ -326,12 +491,33 @@ def test_repository_instructions_cover_monorepo_and_agentic_controls():
     assert len(text.splitlines()) >= 100
 
 
+def test_authority_hierarchies_have_exactly_six_numbered_layers():
+    documents = {
+        "AGENTS.md": "Source-of-truth order",
+        ".github/copilot-instructions.md": "Source-of-truth hierarchy",
+        ".github/instructions/README.md": "Precedence",
+    }
+    for path, heading in documents.items():
+        text = (ROOT / path).read_text()
+        section = re.search(
+            rf"^## {re.escape(heading)}\s*$\n(?P<body>.*?)(?=^## |\Z)",
+            text,
+            re.MULTILINE | re.DOTALL,
+        )
+        assert section
+        assert re.findall(r"^(\d+)\.\s", section.group("body"), re.MULTILINE) == ["1", "2", "3", "4", "5", "6"]
+
+
 def test_validation_workflow_is_least_privilege_and_supply_chain_pinned():
     text = (ROOT / ".github/workflows/validate-scaffold.yml").read_text()
     assert "permissions:\n  contents: read" in text
     assert "concurrency:" in text
     assert "timeout-minutes:" in text
     assert "persist-credentials: false" in text
+    assert "uv sync --frozen --extra test" in text
+    assert "uv run --frozen --extra test" in text
+    assert "pip install" not in text
+    assert "astral-sh/setup-uv@" in text
     uses = re.findall(r"uses:\s+([^\s#]+)", text)
     assert uses
     for action in uses:
@@ -344,6 +530,7 @@ def test_dependabot_maintains_actions_and_python_dependencies():
     assert ecosystems == {"github-actions", "pip"}
     for entry in config["updates"]:
         assert entry["schedule"]["interval"] == "monthly"
+        assert entry["cooldown"]["default-days"] >= 7
         assert entry["open-pull-requests-limit"] <= 5
 
 
@@ -394,11 +581,22 @@ def test_feature_control_plane_contracts():
         "result",
         "evidence",
         "failure_reason",
+        "exception_id",
         "next_transition",
     }
-    for gate in manifest["gates"].values():
-        assert set(gate) == required_gate_fields
-        assert gate["result"] in {"PENDING", "PASS", "FAIL", "EXCEPTED"}
+    for gate_name, gate in manifest["gates"].items():
+        if gate_name in {"accessibility_review", "operational_readiness_review"}:
+            assert set(gate) == required_gate_fields | {
+                "applicability",
+                "not_applicable_rationale",
+            }
+            assert gate["applicability"] in {"UNASSESSED", "APPLICABLE", "NOT_APPLICABLE"}
+        else:
+            assert set(gate) == required_gate_fields
+        allowed = {"PENDING", "PASS", "FAIL", "EXCEPTED"}
+        if gate_name in {"accessibility_review", "operational_readiness_review"}:
+            allowed.add("NOT_APPLICABLE")
+        assert gate["result"] in allowed
     assert set(manifest["evidence"]) >= {"tdd_cycles", "full_suite", "verification"}
     assert (ROOT / "wiki/delivery/templates/feature/exceptions.json").is_file()
 

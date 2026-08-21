@@ -1,5 +1,9 @@
 # {{FEATURE_NAME}} Retrospective
 
+- Released revision: PENDING
+- Retrospective status: PENDING
+- Documentation candidate revision: PENDING
+
 ## Outcome versus target
 
 ## What worked

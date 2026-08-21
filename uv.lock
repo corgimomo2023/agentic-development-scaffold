@@ -6,17 +6,19 @@ requires-python = ">=3.11"
 name = "agentic-development-scaffold"
 version = "0.1.0"
 source = { virtual = "." }
+dependencies = [
+    { name = "pyyaml" },
+]
 
 [package.optional-dependencies]
 test = [
     { name = "pytest" },
-    { name = "pyyaml" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8,<9" },
-    { name = "pyyaml", marker = "extra == 'test'", specifier = ">=6,<7" },
+    { name = "pyyaml", specifier = ">=6,<7" },
 ]
 provides-extras = ["test"]
 

@@ -19,7 +19,16 @@ Files ending in `.instructions.md` apply automatically to matching paths. They r
 
 ## Precedence
 
-Always apply the human request, root `AGENTS.md`, repository-wide Copilot instructions, and every matching path-specific instruction. The narrowest applicable rule wins when rules differ. Report unresolved contradictions rather than silently choosing.
+Use the repository source-of-truth order exactly:
+
+1. Current human instruction for the active request.
+2. Approved feature package under `wiki/delivery/features/`.
+3. Accepted ADRs and current architecture baseline under `wiki/architecture/`.
+4. Root `AGENTS.md`, the nearest nested `AGENTS.md`, repository-wide Copilot instructions, and all applicable path-specific instructions.
+5. Executable tests and public contracts.
+6. Reusable templates and examples.
+
+Layer-four files are coequal refinements; path specificity does not select a winner. Matching path-specific instructions supplement higher-authority artifacts; they do not override them. Stop and report any unresolved contradiction instead of selecting a winner.
 
 ## Authoring rules
 

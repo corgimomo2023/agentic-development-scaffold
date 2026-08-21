@@ -1,13 +1,13 @@
 ---
-name: 92-knowledge-writeback
-description: 'Perform post-release evidence writeback in a separate documentation-only candidate without mutating the released revision.'
+name: 97-knowledge-writeback
+description: 'Perform post-release, post-retrospective evidence writeback in a separate documentation-only candidate without mutating the released revision.'
 argument-hint: 'Provide completed change, evidence, decisions, and canonical destinations'
 agent: knowledge-curator
 ---
 
-# 92 Knowledge Writeback
+# 97 Knowledge Writeback
 
-Perform post-release evidence writeback without duplication or provenance loss. This prompt must not alter the released revision; it creates a new documentation-only candidate.
+Perform post-release evidence writeback after the retrospective has produced durable learnings. This prompt must not alter the released revision; it creates a new documentation-only candidate.
 
 ## Inputs
 
@@ -19,6 +19,7 @@ Perform post-release evidence writeback without duplication or provenance loss. 
 - `incidents`
 - `wiki schema`
 - `released revision identity`
+- `retrospective findings and owned follow-ups`
 
 If any required input is unavailable, label it `missing`; do not fabricate it.
 
@@ -32,13 +33,14 @@ If any required input is unavailable, label it `missing`; do not fabricate it.
 
 ## Procedure
 
-1. Confirm the released revision and create a separate documentation-only candidate for writeback.
+1. Confirm the released revision and completed retrospective, then create a separate documentation-only candidate for writeback.
 2. Classify each item as raw, product, knowledge, architecture, delivery, or governance.
 3. Preserve immutable evidence and provenance.
 4. Locate canonical pages before creating new ones.
 5. Compile supported durable facts and link evidence.
 6. Mark superseded content without deleting history.
 7. Update indexes and wiki log, then validate links, public safety, and navigation.
+8. Record the documentation-only candidate, writeback evidence, and closure evidence in the feature manifest; only then recommend `CLOSED`.
 
 ## Required output
 

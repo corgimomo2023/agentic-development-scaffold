@@ -38,7 +38,7 @@ If any required input is unavailable, label it `missing`; do not fabricate it.
 4. Classify improvements by product, architecture, process, tooling, and knowledge.
 5. Prioritize by impact, effort, and recurrence risk.
 6. Assign one owner and due trigger to each action.
-7. Write durable learning through the knowledge curator.
+7. Produce an evidence-complete handoff packet for the knowledge curator; do not update canonical knowledge or require writeback references in this phase.
 
 ## Required output
 
@@ -47,8 +47,8 @@ If any required input is unavailable, label it `missing`; do not fabricate it.
 - What failed or caused rework and why.
 - Plan-versus-actual deltas.
 - Prioritized improvement actions with owners.
-- Changes to templates, prompts, tests, or governance.
-- Knowledge-writeback references.
+- Proposed changes to templates, prompts, tests, or governance.
+- Knowledge-writeback handoff packet: approved learnings, evidence, destinations, owners, and unresolved decisions.
 
 Every output must also include:
 - Exact revision or artifact identity.
@@ -63,6 +63,7 @@ Every output must also include:
 - Record exact commands and actual results when executed. Otherwise cite supplied evidence, label it unverified by this role, and request an execute-capable verifier; never invent output.
 - Verify no secret, private path, personal data, or private infrastructure detail enters a public artifact.
 - Ensure PASS applies only to the inspected revision and required evidence is complete.
+- Confirm the retrospective can complete without canonical knowledge mutations; route the handoff packet to `97-knowledge-writeback` as the next post-release step.
 
 ## Stop conditions
 

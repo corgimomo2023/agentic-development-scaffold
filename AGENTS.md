@@ -7,10 +7,11 @@ This file is the authoritative repository-wide contract for every human or AI ag
 1. Human instruction for the current task.
 2. Approved feature package under `wiki/delivery/features/`.
 3. Accepted ADRs and current architecture baseline under `wiki/architecture/`.
-4. This `AGENTS.md` and path-specific instructions.
-5. Reusable templates and examples.
+4. This root `AGENTS.md`, the nearest nested `AGENTS.md`, repository-wide Copilot instructions, and all applicable path-specific instructions.
+5. Executable tests and public contracts.
+6. Reusable templates and examples.
 
-If sources conflict, stop and report the conflict. Never silently choose.
+The layer-four files are coequal refinements; path specificity does not select a winner. If any sources conflict, stop and report the conflict. Never silently choose.
 
 ## Human authority
 
@@ -18,7 +19,7 @@ Humans retain final authority over product scope, architecture decisions, risk a
 
 ## Required lifecycle
 
-Every change follows: intake -> proposal -> discovery -> design/ADR -> plan/tasks -> TDD implementation -> spec review -> quality/security review -> verification -> release -> retrospective/knowledge write-back.
+Every change follows: intake -> proposal -> discovery -> design/ADR -> plan/tasks -> TDD implementation -> spec review -> quality/security review -> verification -> release -> retrospective -> knowledge write-back.
 
 No implementation begins until the feature has explicit actors, scope, non-goals, observable acceptance criteria, dependencies, risks, test strategy, and required architecture decisions.
 

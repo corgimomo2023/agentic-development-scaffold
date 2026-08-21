@@ -22,8 +22,8 @@ Prompt files are reusable entry points for common lifecycle tasks. They compleme
 | `82-security-review` | security-reviewer | dedicated fail-closed security verdict |
 | `85-operational-readiness` | operational-readiness-reviewer | deploy, observe, recover, rollback verdict |
 | `90-verify-release` | release-verifier | fresh release evidence packet |
-| `92-knowledge-writeback` | knowledge-curator | post-release documentation-only candidate |
 | `95-retrospective` | orchestrator | owned process improvements |
+| `97-knowledge-writeback` | knowledge-curator | post-retrospective documentation-only candidate and closure evidence |
 
 ## Usage
 

@@ -8,19 +8,21 @@
 
 ## Activities
 
-Compare outcome to target, record incidents and learning, update knowledge and architecture, supersede decisions, and assign follow-ups.
+Compare outcome to target, record incidents and proposed learning, identify candidate knowledge or architecture updates, and assign follow-ups. Do not mutate canonical knowledge or the released revision in this phase.
 
 ## Required artifacts
 
-- Retrospective and knowledge write-back.
-- Updated feature status and traceability links.
+- Completed retrospective with evidence and owned follow-ups.
+- Knowledge-writeback handoff packet containing approved learnings, evidence, proposed canonical destinations, and unresolved decisions.
+- Proposed feature-status and traceability-link updates recorded only in the writeback handoff; do not mutate the canonical feature package during retrospective.
 - Gate record with owner and timestamp.
 
 ## Exit evidence
 
 - Artifact reviewed against its explicit checklist.
 - Open risks and unknowns have owners and resolution gates.
-- Next permitted state: `CLOSED`.
+- Remain in `RELEASED`; next required step is `97-knowledge-writeback` using a separate documentation-only candidate.
+- `CLOSED` is permitted only after writeback validation and closure evidence are recorded without mutating the released revision.
 
 ## Failure and revision
 

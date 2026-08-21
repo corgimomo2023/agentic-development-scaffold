@@ -25,7 +25,7 @@ A public-safe, monorepo-ready software delivery scaffold for humans, GitHub Copi
 5. Start with `.github/prompts/00-intake.prompt.md` or the `orchestrator` agent.
 6. Do not implement until proposal, design, plan, acceptance criteria, and required ADRs pass their gates.
 7. Use strict RED-GREEN-REFACTOR and preserve command output as verification evidence.
-8. Run `python3 scripts/validate_scaffold.py` and `uv run --extra test pytest` before every PR.
+8. Run `uv run --frozen --extra test python scripts/validate_scaffold.py` and `uv run --frozen --extra test pytest` before every PR.
 
 ## Lifecycle
 

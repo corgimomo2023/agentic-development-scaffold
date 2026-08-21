@@ -4,6 +4,8 @@ Lifecycle controls cannot be skipped implicitly. An exception is valid only when
 
 Each active feature stores exceptions in `exceptions.json`, referenced by `manifest.yaml`. An empty list means no exception.
 
+A manifest gate may use `result: EXCEPTED` only when its `exception_id` names a non-expired record in that package's `exceptions.json`, and that record's `feature_id` and `gate` exactly match the manifest. Non-conditional gates cannot use `NOT_APPLICABLE`.
+
 ## Required record
 
 ```json
