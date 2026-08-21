@@ -60,6 +60,8 @@ def test_exception_records_require_human_approval_expiry_and_controls():
     blank_human = dict(valid, approved_by="human:   ")
     assert any("named human" in error for error in VALIDATOR.validate_exception_records([blank_human], today="2026-08-21"))
 
+    assert any("exception_id must be unique" in error for error in VALIDATOR.validate_exception_records([valid, dict(valid)], today="2026-08-21"))
+
     invalid = dict(valid)
     invalid.update(
         approved_by="agent:orchestrator",
@@ -278,12 +280,23 @@ def test_manifest_rejects_extra_owner_identity_collisions_and_unknown_state():
         "evidence": ["tasks.md#task-001-tdd-evidence"],
     }
     assert VALIDATOR.validate_manifest_data(data, []) == []
+    data["gates"]["plan"].update(result="PENDING", checked_inputs=[], evidence=[])
+    assert any("prior gate plan to be successful" in error for error in VALIDATOR.validate_manifest_data(data, []))
+    data["gates"]["plan"].update(
+        result="PASS",
+        checked_inputs=["plan.md", "tasks.md"],
+        evidence=["plan.md", "tasks.md"],
+    )
     data["gates"]["release"].update(
         checked_inputs=["verification.md#release-decision"],
         evidence=["verification.md#release-decision"],
         result="PASS",
     )
     assert any("future gate release to remain PENDING" in error for error in VALIDATOR.validate_manifest_data(data, []))
+
+    data = yaml.safe_load((ROOT / "examples/feature-package/manifest.yaml").read_text())
+    data["gates"]["proposal"]["checked_inputs"] = ["retrospective.md"]
+    assert any("checked inputs must include its canonical" in error for error in VALIDATOR.validate_manifest_data(data, []))
 
     data = yaml.safe_load((ROOT / "wiki/delivery/templates/feature/manifest.yaml").read_text())
     data["owners"]["security_reviewer"] = "example:security-reviewer"
@@ -413,6 +426,11 @@ def test_artifact_aliasing_and_hollow_task_evidence_fail_closed(tmp_path):
     assert any("requires exactly one non-empty Exact command" in error for error in errors)
 
     tasks = (source / "tasks.md").read_text() + "\n## task-003 TDD evidence\n\nEmpty.\n"
+    (package / "tasks.md").write_text(tasks)
+    errors = VALIDATOR.validate_manifest_data(data, [], package)
+    assert any("canonical uppercase" in error for error in errors)
+
+    tasks = (source / "tasks.md").read_text() + "\n## TASK-BOGUS TDD evidenc\n\nEmpty.\n"
     (package / "tasks.md").write_text(tasks)
     errors = VALIDATOR.validate_manifest_data(data, [], package)
     assert any("canonical uppercase" in error for error in errors)

@@ -446,6 +446,7 @@ def validate_exception_records(
         return ["exceptions root must be a JSON list"]
     current = date.fromisoformat(today) if today else date.today()
     errors: list[str] = []
+    seen_ids: set[str] = set()
     broad_scope = re.compile(
         r"\b(?:entire|whole|full|all|any|every|everything|global|repo|repository|repository-wide)\b",
         re.IGNORECASE,
@@ -464,6 +465,11 @@ def validate_exception_records(
         )
         if missing:
             errors.append(f"{label}: missing required fields {', '.join(missing)}")
+        exception_id = record.get("exception_id")
+        if isinstance(exception_id, str):
+            if exception_id in seen_ids:
+                errors.append(f"{label}: exception_id must be unique")
+            seen_ids.add(exception_id)
         approver = str(record.get("approved_by", ""))
         if not approver.startswith("human:") or not approver[len("human:"):].strip():
             errors.append(f"{label}: a named human approver is required")
@@ -724,6 +730,13 @@ def validate_manifest_data(
                     failures.append(f"gate {gate_name} EXCEPTED evidence must include exceptions.json")
             elif not set(GATE_FINAL_EVIDENCE[gate_name]).issubset(evidence_items):
                 failures.append(f"gate {gate_name} final evidence must include its canonical gate artifacts")
+        if result != "PENDING" and isinstance(checked_inputs, list):
+            canonical_inputs = set(GATE_FINAL_EVIDENCE[gate_name])
+            if result == "EXCEPTED":
+                if not canonical_inputs.intersection(checked_inputs):
+                    failures.append(f"gate {gate_name} EXCEPTED checked inputs must include a canonical gate artifact")
+            elif not canonical_inputs.issubset(checked_inputs):
+                failures.append(f"gate {gate_name} checked inputs must include its canonical gate artifacts")
         if result == "FAIL" and not gate.get("failure_reason"):
             failures.append(f"gate {gate_name} FAIL requires failure_reason")
         if result in {"PENDING", "PASS", "EXCEPTED", "NOT_APPLICABLE"} and gate.get("failure_reason") is not None:
@@ -810,6 +823,14 @@ def validate_manifest_data(
             failed_gate_name = failed_gates[0]
             failed_gate = gates[failed_gate_name]
             failure_index = REQUIRED_GATES.index(failed_gate_name)
+            for prior_gate_name in REQUIRED_GATES[:failure_index]:
+                prior_gate = gates.get(prior_gate_name)
+                prior_result = prior_gate.get("result") if isinstance(prior_gate, dict) else None
+                prior_success = {"PASS", "EXCEPTED"}
+                if prior_gate_name in CONDITIONAL_GATES:
+                    prior_success.add("NOT_APPLICABLE")
+                if prior_result not in prior_success:
+                    failures.append(f"BLOCKED lifecycle requires prior gate {prior_gate_name} to be successful")
             for future_gate_name in REQUIRED_GATES[failure_index + 1 :]:
                 future_gate = gates.get(future_gate_name)
                 if not isinstance(future_gate, dict) or future_gate.get("result") != "PENDING":
@@ -975,7 +996,8 @@ def validate_manifest_data(
             )
             all_evidence_headings = re.findall(r"^##\s+(.+?TDD evidence)\s*$", task_text, re.MULTILINE | re.IGNORECASE)
             canonical_headings = [f"{match.group('id')} TDD evidence" for match in task_blocks]
-            if all_evidence_headings != canonical_headings:
+            task_like_headings = re.findall(r"^##\s+(TASK-[^\n]+)\s*$", task_text, re.MULTILINE | re.IGNORECASE)
+            if all_evidence_headings != canonical_headings or task_like_headings != canonical_headings:
                 failures.append("tasks.md every TDD evidence heading must use canonical uppercase TASK-* syntax")
             if not task_blocks:
                 failures.append("tasks.md requires at least one structured TASK-* TDD evidence block")
