@@ -8,7 +8,7 @@
 
 ## Activities
 
-Run independent requirement-by-requirement spec review. After spec PASS, run separate correctness/maintainability/test-quality review and security/threat review with different assignments. Trigger independent accessibility and operational-readiness reviews when the change meets their conditions; otherwise record `NOT_APPLICABLE` with concrete scope rationale.
+Run independent requirement-by-requirement spec review. After spec PASS, run separate correctness/maintainability/test-quality review and security/threat review with different assignments. The existing quality reviewer rechecks `implementation-minimality`; no new reviewer is created. For browser-facing changes, run `visual-browser-qa` report-only against the frozen revision with desktop/mobile, console/network, forms/states, keyboard, and accessibility evidence; it never fixes or commits. Trigger independent accessibility and operational-readiness reviews when the change meets their conditions; otherwise record `NOT_APPLICABLE` with concrete scope rationale.
 
 ## Required artifacts
 

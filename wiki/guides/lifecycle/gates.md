@@ -4,6 +4,8 @@
 
 Checks prerequisites before side effects: clean branch, approved scope, dependencies, credentials channel, commands, rollback, and testability.
 
+External skill additions or upgrades also require `skill-supply-chain-review` before catalog mutation: public source URL, pinned 40-character revision, skill-level license, artifact SHA-256, executable/network/secret/write/hook/tool/transitive-dependency scope, and update/rollback evidence.
+
 ## Revision gate
 
 A failed artifact or review returns to its owner with concrete evidence and resumption criteria. Never lower the criterion to make work pass.

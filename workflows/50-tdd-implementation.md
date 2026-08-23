@@ -8,11 +8,12 @@
 
 ## Activities
 
-For each task, prove RED, implement minimum GREEN, rerun focused and full tests, refactor while green, and record evidence.
+Before the first production edit, record `implementation-minimality` evidence using this order: existing seam, standard library, platform/framework native, installed dependency, small direct implementation, then new abstraction/dependency last. Preserve security, tests, accessibility, data integrity, observability, and rollback. For each task, prove RED, implement minimum GREEN, rerun focused and full tests, refactor while green, and record evidence.
 
 ## Required artifacts
 
 - Task-level red/green evidence and commit.
+- Chosen minimality rung, rejected earlier rungs, and preserved controls.
 - Updated feature status and traceability links.
 - Gate record with owner and timestamp.
 

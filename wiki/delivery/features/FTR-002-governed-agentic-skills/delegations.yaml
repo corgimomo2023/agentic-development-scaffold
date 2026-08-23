@@ -1,0 +1,79 @@
+schema_version: 1
+delegations:
+- delegation_id: DEL-FTR-002-IMPLEMENT
+  task_id: TASK-001
+  role: tdd-developer
+  goal: Implement the governed skills catalog and tests.
+  authoritative_context:
+  - AGENTS.md
+  - wiki/delivery/features/FTR-002-governed-agentic-skills/feature.md
+  allowed_files:
+  - .github/skills/**
+  - skills.lock.yaml
+  - scripts/validate_scaffold.py
+  - tests/**
+  - workflows/**
+  - .github/prompts/**
+  - wiki/**
+  - README.md
+  allowed_tools:
+  - read
+  - search
+  - edit
+  - execute
+  allowed_side_effects:
+  - repository file writes
+  - local test execution
+  non_goals:
+  - commit, push, PR, merge, release, deployment
+  acceptance_criteria:
+  - Eight skills and fail-closed catalog validate.
+  - Focused and full tests pass.
+  verification_commands:
+  - uv run --frozen --extra test python scripts/validate_scaffold.py
+  - uv run --frozen --extra test pytest
+  required_return_fields:
+  - status
+  - files_changed
+  - commands_run
+  - evidence
+  - risks_or_unknowns
+  - recommended_next_state
+  stop_conditions:
+  - scope expansion
+  - conflicting authoritative artifacts
+  - secret or permission prompt
+  - destructive or production action not explicitly authorized
+- delegation_id: DEL-FTR-002-SPEC
+  task_id: REVIEW-SPEC
+  role: spec-reviewer
+  goal: Review the frozen candidate against approved scope.
+  authoritative_context:
+  - feature.md
+  - use-cases.md
+  - design.md
+  - acceptance.md
+  allowed_files:
+  - repository read-only
+  allowed_tools:
+  - read
+  - search
+  - execute
+  allowed_side_effects:
+  - local read-only command execution
+  non_goals:
+  - editing, fixing, committing, or merging
+  acceptance_criteria:
+  - Every criterion has direct evidence.
+  verification_commands:
+  - uv run --frozen --extra test python scripts/validate_scaffold.py
+  required_return_fields:
+  - status
+  - files_changed
+  - commands_run
+  - evidence
+  - risks_or_unknowns
+  - recommended_next_state
+  stop_conditions:
+  - revision is not frozen
+  - spec mismatch

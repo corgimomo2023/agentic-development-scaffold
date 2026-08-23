@@ -4,11 +4,13 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import os
 import re
 import subprocess
 import sys
-from datetime import date
-from pathlib import Path
+from datetime import date, datetime
+from pathlib import Path, PurePosixPath
 
 import yaml
 
@@ -37,6 +39,9 @@ REQUIRED = {
     "wiki/governance/exception-policy.md",
     "wiki/governance/security.md",
     "wiki/governance/traceability-policy.md",
+    ".github/skills/manifest.schema.json",
+    ".github/skills/manifest.yaml",
+    "skills.lock.yaml",
     "wiki/delivery/templates/feature/manifest.yaml",
     "wiki/delivery/templates/feature/discovery.md",
     "wiki/delivery/templates/feature/delegations.yaml",
@@ -76,22 +81,23 @@ PROMPT_HEADINGS = (
     "## Stop conditions",
 )
 AGENT_TOOLS = {
-    "orchestrator": "['read', 'search', 'agent', 'todo']",
-    "product-manager": "['read', 'search']",
-    "discovery-analyst": "['read', 'search', 'web']",
-    "architect": "['read', 'search']",
-    "implementation-planner": "['read', 'search']",
-    "tdd-developer": "['read', 'search', 'edit', 'execute']",
-    "debugger": "['read', 'search', 'edit', 'execute']",
-    "test-specialist": "['read', 'search', 'edit', 'execute']",
-    "accessibility-reviewer": "['read', 'search', 'execute']",
-    "security-reviewer": "['read', 'search', 'execute']",
-    "spec-reviewer": "['read', 'search', 'execute']",
-    "code-reviewer": "['read', 'search', 'execute']",
-    "operational-readiness-reviewer": "['read', 'search', 'execute']",
-    "release-verifier": "['read', 'search', 'execute']",
-    "knowledge-curator": "['read', 'search', 'edit', 'execute']",
+    "orchestrator": ("read", "search", "agent", "todo"),
+    "product-manager": ("read", "search"),
+    "discovery-analyst": ("read", "search", "web"),
+    "architect": ("read", "search"),
+    "implementation-planner": ("read", "search"),
+    "tdd-developer": ("read", "search", "edit", "execute"),
+    "debugger": ("read", "search", "edit", "execute"),
+    "test-specialist": ("read", "search", "edit", "execute"),
+    "accessibility-reviewer": ("read", "search", "execute"),
+    "security-reviewer": ("read", "search", "execute"),
+    "spec-reviewer": ("read", "search", "execute"),
+    "code-reviewer": ("read", "search", "execute"),
+    "operational-readiness-reviewer": ("read", "search", "execute"),
+    "release-verifier": ("read", "search", "execute"),
+    "knowledge-curator": ("read", "search", "edit", "execute"),
 }
+SKILL_TOOLS = {tool for tools in AGENT_TOOLS.values() for tool in tools}
 PROMPT_AGENTS = {
     "00-intake": "orchestrator",
     "10-proposal": "product-manager",
@@ -381,6 +387,33 @@ GATE_OWNER_FIELDS = {
 }
 WORKFLOW_HEADINGS = ("## Entry criteria", "## Activities", "## Required artifacts", "## Exit evidence", "## Failure and revision")
 
+SKILL_FIELDS = {
+    "id", "path", "lifecycle_states", "owning_agent", "triggers", "anti_triggers",
+    "required_inputs", "required_outputs", "tools", "side_effects", "concurrency",
+    "allow_implicit_invocation", "provenance",
+}
+SKILL_LOCK_FIELDS = {"id", "path", "sha256", "provenance"}
+SKILL_PROVENANCE_FIELDS = {"origin", "license", "sources"}
+SKILL_SOURCE_FIELDS = {
+    "url", "revision", "license", "adaptation", "license_path", "license_sha256",
+    "verified_at", "verified_by",
+}
+SKILL_HEADINGS = (
+    "## Trigger", "## Anti-trigger", "## Lifecycle insertion", "## Inputs",
+    "## Procedure", "## Outputs and evidence", "## Guardrails", "## Verification",
+)
+SKILL_CONCURRENCY = {"independent", "serialized", "exclusive"}
+SKILL_SIDE_EFFECTS = {
+    "write_files", "execute_commands", "network_access", "browser_navigation", "screenshots",
+}
+DANGEROUS_TOOL_EFFECTS = {
+    "edit": "write_files",
+    "write": "write_files",
+    "execute": "execute_commands",
+    "web": "network_access",
+    "browser": "browser_navigation",
+}
+
 LEGACY_ROOT_PATHS = (
     "01-product",
     "02-knowledge-base",
@@ -423,18 +456,53 @@ def find_forbidden(text: str) -> list[str]:
     return [label for label, pattern in FORBIDDEN.items() if pattern.search(text)]
 
 
-def collect_text_files() -> list[tuple[Path, str]]:
-    """Read repository text files while excluding generated and VCS state."""
+def find_repository_symlinks(root: Path = ROOT) -> list[Path]:
+    """Return repository-relative symlinks without following directory links."""
+    excluded = {".git", ".venv", ".pytest_cache", "__pycache__"}
+    symlinks: list[Path] = []
+    if root.is_symlink():
+        return [Path(".")]
+    for current, directory_names, file_names in os.walk(root, followlinks=False):
+        current_path = Path(current)
+        kept_directories: list[str] = []
+        for name in directory_names:
+            path = current_path / name
+            if name in excluded:
+                continue
+            if path.is_symlink():
+                symlinks.append(path.relative_to(root))
+            else:
+                kept_directories.append(name)
+        directory_names[:] = kept_directories
+        for name in file_names:
+            path = current_path / name
+            if path.is_symlink():
+                symlinks.append(path.relative_to(root))
+    return sorted(symlinks, key=lambda path: path.as_posix())
+
+
+def collect_text_files(root: Path = ROOT) -> list[tuple[Path, str]]:
+    """Read real repository text files without following symlink targets."""
     excluded = {".git", ".venv", ".pytest_cache", "__pycache__"}
     files: list[tuple[Path, str]] = []
-    for path in ROOT.rglob("*"):
-        if not path.is_file() or excluded.intersection(path.parts):
-            continue
-        try:
-            text = path.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
-            continue
-        files.append((path, text))
+    if root.is_symlink():
+        return files
+    for current, directory_names, file_names in os.walk(root, followlinks=False):
+        current_path = Path(current)
+        directory_names[:] = [
+            name
+            for name in directory_names
+            if name not in excluded and not (current_path / name).is_symlink()
+        ]
+        for name in file_names:
+            path = current_path / name
+            if path.is_symlink() or not path.is_file():
+                continue
+            try:
+                text = path.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                continue
+            files.append((path, text))
     return files
 
 
@@ -1037,11 +1105,327 @@ def validate_manifest_data(
     return failures
 
 
+def _validate_skill_provenance(provenance: object, label: str) -> list[str]:
+    """Validate locally authored and selectively adapted skill provenance."""
+    errors: list[str] = []
+    if not isinstance(provenance, dict) or set(provenance) != SKILL_PROVENANCE_FIELDS:
+        return [f"{label}: provenance fields must exactly match the governed schema"]
+    origin = provenance.get("origin")
+    if origin not in {"internal", "composite", "external"}:
+        errors.append(f"{label}: provenance origin must be internal, composite, or external")
+    license_name = provenance.get("license")
+    if not isinstance(license_name, str) or not license_name.strip():
+        errors.append(f"{label}: provenance license is required")
+    sources = provenance.get("sources")
+    if not isinstance(sources, list):
+        return [*errors, f"{label}: provenance sources must be a list"]
+    if origin in {"composite", "external"} and not sources:
+        errors.append(f"{label}: {origin} provenance requires source references")
+    for index, source in enumerate(sources):
+        source_label = f"{label}.sources[{index}]"
+        if not isinstance(source, dict) or set(source) != SKILL_SOURCE_FIELDS:
+            errors.append(f"{source_label}: source-review attestation fields must exactly match the source schema")
+            continue
+        if not isinstance(source.get("url"), str) or not source["url"].startswith("https://"):
+            errors.append(f"{source_label}: source URL must use https")
+        revision = source.get("revision")
+        if not isinstance(revision, str) or not re.fullmatch(r"[0-9a-f]{40}", revision):
+            errors.append(f"{source_label}: revision must be an immutable 40-character lowercase commit SHA")
+        for field in ("license", "adaptation"):
+            if not isinstance(source.get(field), str) or not source[field].strip():
+                errors.append(f"{source_label}: {field} is required")
+        license_path = source.get("license_path")
+        if not isinstance(license_path, str):
+            errors.append(f"{source_label}: license_path must be a safe repository-relative path")
+        else:
+            parsed_path = PurePosixPath(license_path)
+            if (
+                not license_path
+                or "\\" in license_path
+                or parsed_path.is_absolute()
+                or any(part in {"", ".", ".."} for part in parsed_path.parts)
+                or parsed_path.as_posix() != license_path
+            ):
+                errors.append(f"{source_label}: license_path must be a safe repository-relative path")
+        license_digest = source.get("license_sha256")
+        if not isinstance(license_digest, str) or not re.fullmatch(r"[0-9a-f]{64}", license_digest):
+            errors.append(f"{source_label}: license_sha256 must be a lowercase 64-character digest")
+        verified_at = source.get("verified_at")
+        valid_verified_at = False
+        if isinstance(verified_at, str):
+            try:
+                if re.fullmatch(r"\d{4}-\d{2}-\d{2}", verified_at):
+                    date.fromisoformat(verified_at)
+                    valid_verified_at = True
+                elif verified_at.endswith("Z"):
+                    datetime.fromisoformat(verified_at[:-1] + "+00:00")
+                    valid_verified_at = True
+            except ValueError:
+                pass
+        if not valid_verified_at:
+            errors.append(f"{source_label}: verified_at must be an ISO date or UTC datetime")
+        verified_by = source.get("verified_by")
+        if not isinstance(verified_by, str) or not re.fullmatch(r"agent:[a-z0-9]+(?:-[a-z0-9]+)*", verified_by):
+            errors.append(f"{source_label}: verified_by must be an agent identity")
+    return errors
+
+
+def _validate_skills_control_plane(root: Path) -> list[str]:
+    """Admit catalog control paths before any parse or content read."""
+    catalog_root = root / ".github/skills"
+    for path, label in (
+        (root, "."),
+        (root / ".github", ".github"),
+        (catalog_root, ".github/skills"),
+    ):
+        if path.is_symlink():
+            return [f"symlinked catalog path component {label} is not allowed"]
+        if not path.is_dir():
+            return [f"catalog path component {label} must be a real directory"]
+
+    errors: list[str] = []
+    for path, label in (
+        (catalog_root / "manifest.yaml", ".github/skills/manifest.yaml"),
+        (catalog_root / "manifest.schema.json", ".github/skills/manifest.schema.json"),
+        (root / "skills.lock.yaml", "skills.lock.yaml"),
+    ):
+        if path.is_symlink():
+            errors.append(f"symlinked control file {label} is not allowed")
+        elif not path.exists():
+            errors.append(f"missing {label}")
+        elif not path.is_file():
+            errors.append(f"{label} must be a regular non-symlink file")
+    return errors
+
+
+def validate_skills(root: Path = ROOT) -> list[str]:
+    """Fail closed when the governed skills catalog and immutable lock disagree."""
+    errors = _validate_skills_control_plane(root)
+    if errors:
+        return errors
+    manifest_path = root / ".github/skills/manifest.yaml"
+    lock_path = root / "skills.lock.yaml"
+    try:
+        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+        lock = yaml.safe_load(lock_path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        return [f"skills catalog contains invalid YAML: {exc}"]
+    if not isinstance(manifest, dict) or set(manifest) != {"schema_version", "skills"}:
+        return ["skills manifest fields must exactly match the governed schema"]
+    if not isinstance(lock, dict) or set(lock) != {"schema_version", "skills"}:
+        return ["skills lock fields must exactly match the governed schema"]
+    if manifest.get("schema_version") != 1 or lock.get("schema_version") != 1:
+        errors.append("skills manifest and lock schema_version must equal 1")
+    manifest_skills = manifest.get("skills")
+    lock_skills = lock.get("skills")
+    if not isinstance(manifest_skills, list) or not manifest_skills:
+        errors.append("skills manifest requires a non-empty skills list")
+        manifest_skills = []
+    if not isinstance(lock_skills, list) or not lock_skills:
+        errors.append("skills lock requires a non-empty skills list")
+        lock_skills = []
+
+    manifest_ids: list[object] = []
+    manifest_paths: list[object] = []
+    manifest_by_id: dict[str, dict] = {}
+    safe_skill_files: dict[str, Path] = {}
+    for index, skill in enumerate(manifest_skills):
+        label = f"skills[{index}]"
+        if not isinstance(skill, dict) or set(skill) != SKILL_FIELDS:
+            errors.append(f"{label}: fields must exactly match the skill schema")
+            continue
+        skill_id = skill.get("id")
+        skill_path = skill.get("path")
+        manifest_ids.append(skill_id)
+        manifest_paths.append(skill_path)
+        if not isinstance(skill_id, str) or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", skill_id):
+            errors.append(f"{label}: id must be lowercase kebab-case")
+            continue
+        manifest_by_id.setdefault(skill_id, skill)
+        expected_path = f".github/skills/{skill_id}/SKILL.md"
+        if skill_path != expected_path:
+            errors.append(f"{label}: path must equal .github/skills/<id>/SKILL.md")
+        lifecycle_states = skill.get("lifecycle_states")
+        if not isinstance(lifecycle_states, list) or not lifecycle_states:
+            errors.append(f"{label}: lifecycle_states must be a non-empty list")
+        else:
+            for state in lifecycle_states:
+                if state not in LIFECYCLE_STATES:
+                    errors.append(f"{label}: unknown lifecycle state {state!r}")
+        if skill.get("owning_agent") not in AGENT_TOOLS:
+            errors.append(f"{label}: unknown owning_agent {skill.get('owning_agent')!r}")
+        for field in ("triggers", "anti_triggers", "required_inputs", "required_outputs"):
+            values = skill.get(field)
+            if not isinstance(values, list) or not values or any(not isinstance(value, str) or not value.strip() for value in values):
+                errors.append(f"{label}: {field} must be a non-empty list of strings")
+        tools = skill.get("tools")
+        effects = skill.get("side_effects")
+        if not isinstance(tools, list) or any(not isinstance(tool, str) or not tool for tool in tools):
+            errors.append(f"{label}: tools must be a list of names")
+            tools = []
+        else:
+            for tool in tools:
+                if tool not in SKILL_TOOLS:
+                    errors.append(f"{label}: unknown tool {tool!r}")
+            owner = skill.get("owning_agent")
+            if owner in AGENT_TOOLS:
+                disallowed = sorted(set(tools) - set(AGENT_TOOLS[owner]))
+                if disallowed:
+                    errors.append(f"{label}: owning_agent {owner} does not allow tools {disallowed}")
+        if not isinstance(effects, list) or any(effect not in SKILL_SIDE_EFFECTS for effect in effects):
+            errors.append(f"{label}: side_effects contains an unknown declaration")
+            effects = []
+        for tool, required_effect in DANGEROUS_TOOL_EFFECTS.items():
+            if tool in tools and required_effect not in effects:
+                errors.append(f"{label}: {tool} requires side effect {required_effect}")
+        if skill.get("concurrency") not in SKILL_CONCURRENCY:
+            errors.append(f"{label}: invalid concurrency policy")
+        if not isinstance(skill.get("allow_implicit_invocation"), bool):
+            errors.append(f"{label}: allow_implicit_invocation must be boolean")
+        errors.extend(_validate_skill_provenance(skill.get("provenance"), label))
+
+        if skill_path == expected_path:
+            file_path = root / expected_path
+            catalog_root = root / ".github/skills"
+            skill_dir = file_path.parent
+            symlink_components: list[Path] = []
+            for component in (catalog_root, skill_dir, file_path):
+                if component.is_symlink():
+                    symlink_components.append(component)
+                    break
+            if symlink_components:
+                for component in symlink_components:
+                    relative_component = component.relative_to(root).as_posix()
+                    errors.append(f"{label}: symlinked path component {relative_component} is not allowed")
+            elif not skill_dir.is_dir() or not file_path.is_file():
+                errors.append(f"{label}: missing skill file {expected_path}")
+            else:
+                resolved_root: Path | None = None
+                resolved_catalog: Path | None = None
+                resolved_file: Path | None = None
+                try:
+                    resolved_root = root.resolve(strict=True)
+                    resolved_catalog = catalog_root.resolve(strict=True)
+                    resolved_file = file_path.resolve(strict=True)
+                except (OSError, RuntimeError):
+                    errors.append(f"{label}: cannot safely resolve skill file {expected_path}")
+                if (
+                    resolved_root is not None
+                    and resolved_catalog is not None
+                    and resolved_file is not None
+                    and (
+                        not resolved_catalog.is_relative_to(resolved_root)
+                        or not resolved_file.is_relative_to(resolved_catalog)
+                        or not resolved_file.is_relative_to(resolved_root)
+                    )
+                ):
+                    errors.append(f"{label}: resolved skill file {expected_path} escapes .github/skills or repository root")
+                    resolved_file = None
+                if resolved_file is not None:
+                    safe_skill_files[expected_path] = file_path
+
+            if file_path.is_symlink():
+                errors.append(f"{label}: symlinked skill {expected_path} must be a regular non-symlink file")
+            elif expected_path in safe_skill_files:
+                try:
+                    metadata, body = parse_frontmatter(file_path)
+                except ValueError as exc:
+                    errors.append(f"{expected_path}: {exc}")
+                else:
+                    if metadata.get("name") != skill_id or not metadata.get("description"):
+                        errors.append(f"{expected_path}: frontmatter name and description are required and name must match id")
+                    for heading in SKILL_HEADINGS:
+                        if heading not in body:
+                            errors.append(f"{expected_path}: missing {heading}")
+
+    for duplicate in sorted({value for value in manifest_ids if manifest_ids.count(value) > 1}, key=str):
+        errors.append(f"duplicate skill id {duplicate!r}")
+    for duplicate in sorted({value for value in manifest_paths if manifest_paths.count(value) > 1}, key=str):
+        errors.append(f"duplicate skill path {duplicate!r}")
+
+    lock_ids: list[object] = []
+    lock_paths: list[object] = []
+    lock_by_id: dict[str, dict] = {}
+    for index, entry in enumerate(lock_skills):
+        label = f"skills.lock[{index}]"
+        if not isinstance(entry, dict) or set(entry) != SKILL_LOCK_FIELDS:
+            errors.append(f"{label}: fields must exactly match the lock schema")
+            continue
+        skill_id = entry.get("id")
+        lock_ids.append(skill_id)
+        lock_paths.append(entry.get("path"))
+        if isinstance(skill_id, str):
+            lock_by_id.setdefault(skill_id, entry)
+        digest = entry.get("sha256")
+        if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+            errors.append(f"{label}: sha256 must be a lowercase 64-character digest")
+        errors.extend(_validate_skill_provenance(entry.get("provenance"), label))
+    for duplicate in sorted({value for value in lock_ids if lock_ids.count(value) > 1}, key=str):
+        errors.append(f"duplicate skill id {duplicate!r} in lock")
+    for duplicate in sorted({value for value in lock_paths if lock_paths.count(value) > 1}, key=str):
+        errors.append(f"duplicate skill path {duplicate!r} in lock")
+
+    if set(manifest_by_id) != set(lock_by_id):
+        errors.append("lock/manifest disagreement: skill IDs differ")
+    for skill_id, skill in manifest_by_id.items():
+        locked = lock_by_id.get(skill_id)
+        if not locked:
+            continue
+        if locked.get("path") != skill.get("path") or locked.get("provenance") != skill.get("provenance"):
+            errors.append(f"lock/manifest disagreement for {skill_id}")
+        path_value = skill.get("path")
+        if isinstance(path_value, str) and path_value == f".github/skills/{skill_id}/SKILL.md":
+            file_path = safe_skill_files.get(path_value)
+            if file_path is not None:
+                actual = hashlib.sha256(file_path.read_bytes()).hexdigest()
+                if locked.get("sha256") != actual:
+                    errors.append(f"{skill_id}: hash mismatch")
+
+    catalog_root = root / ".github/skills"
+    if not catalog_root.is_symlink() and catalog_root.is_dir():
+        for entry in catalog_root.iterdir():
+            if entry.is_symlink():
+                relative_entry = entry.relative_to(root).as_posix()
+                errors.append(f"symlinked skill directory {relative_entry} is invalid/orphan")
+        skill_files = [path for path in catalog_root.rglob("*") if path.name == "SKILL.md"]
+    else:
+        skill_files = []
+    for path in skill_files:
+        if path.is_symlink():
+            relative_path = path.relative_to(root).as_posix()
+            error = f"symlinked skill {relative_path} must be a regular non-symlink file"
+            if not any(error in existing for existing in errors):
+                errors.append(error)
+    discovered = {
+        path.relative_to(root).as_posix()
+        for path in skill_files
+        if not path.is_symlink() and path.is_file()
+    }
+    declared = {path for path in manifest_paths if isinstance(path, str)}
+    for orphan in sorted(discovered - declared):
+        errors.append(f"orphan skill {orphan}")
+    return errors
+
+
 def main() -> int:
     failures: list[str] = []
     for name in sorted(REQUIRED):
         if not (ROOT / name).is_file():
             failures.append(f"missing required file: {name}")
+
+    failures.extend(validate_skills(ROOT))
+    schema_path = ROOT / ".github/skills/manifest.schema.json"
+    if not schema_path.is_symlink() and schema_path.is_file():
+        try:
+            schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            failures.append(f".github/skills/manifest.schema.json: invalid JSON: {exc.msg}")
+        else:
+            if not isinstance(schema, dict) or schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
+                failures.append(".github/skills/manifest.schema.json: must declare JSON Schema draft 2020-12")
+
+    for symlink in find_repository_symlinks(ROOT):
+        failures.append(f"repository symlink is not allowed: {symlink.as_posix()}")
 
     for name in LEGACY_ROOT_PATHS:
         if (ROOT / name).exists():
@@ -1075,7 +1459,8 @@ def main() -> int:
         if not metadata.get("description"):
             failures.append(f"{path.relative_to(ROOT)}: description is required")
         expected_tools = AGENT_TOOLS.get(path.name.removesuffix(".agent.md"))
-        if metadata.get("tools") != expected_tools:
+        expected_tools_text = repr(list(expected_tools)) if expected_tools is not None else None
+        if metadata.get("tools") != expected_tools_text:
             failures.append(f"{path.relative_to(ROOT)}: tools must match governed least-privilege matrix")
         if len(body.splitlines()) < 60:
             failures.append(f"{path.relative_to(ROOT)}: agent contract must be at least 60 lines")

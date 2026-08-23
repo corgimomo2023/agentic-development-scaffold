@@ -1,0 +1,98 @@
+schema_version: 1
+skills:
+- id: intake-sizing-and-escalation
+  path: .github/skills/intake-sizing-and-escalation/SKILL.md
+  sha256: 4389add9acfea348f2d0940a0cdcb2150e629573ac4ca966c7218ff570ea5ed4
+  provenance: &id002
+    origin: internal
+    license: MIT
+    sources: []
+- id: brainstorm-and-converge
+  path: .github/skills/brainstorm-and-converge/SKILL.md
+  sha256: 97a1950c768ba200026706bc5730c5e70e37d613a2612807d6b88d67ace13dd0
+  provenance:
+    origin: composite
+    license: MIT
+    sources:
+    - url: https://github.com/obra/superpowers.git
+      revision: b36e0829c6d0140e93cfef2ca599b1b07d4a7797
+      license: MIT
+      license_path: LICENSE
+      license_sha256: a37e0e9697144819e1d965176ac4ae5bc3fa02d11e7812036bbcadf6dafe2400
+      verified_at: '2026-08-22'
+      verified_by: agent:controller-01
+      adaptation: Adapted option-comparison and convergence discipline; no code copied.
+- id: ux-product-design
+  path: .github/skills/ux-product-design/SKILL.md
+  sha256: 3b11fae0b5ef51788336d8672573715c9614a7b7dd908ecf65ad0a52f8e37f95
+  provenance:
+    origin: composite
+    license: MIT
+    sources:
+    - &id001
+      url: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git
+      revision: bc826e2267a36d98a2dcf5231e16c30ff546770f
+      license: MIT
+      license_path: LICENSE
+      license_sha256: 738f69dfa83db5c347c678fb9d90e560877059f0de93a327c39001bff92dc014
+      verified_at: '2026-08-22'
+      verified_by: agent:controller-01
+      adaptation: Selective UX and visual-design ideas only; CLI, engine, datasets,
+        installer, hooks, and auto-implementation excluded.
+- id: frontend-design-direction
+  path: .github/skills/frontend-design-direction/SKILL.md
+  sha256: 829e2c0eb32cf7cb02cdfb347f7d43f0213885244330cb223d4fe289773b1aed
+  provenance:
+    origin: composite
+    license: MIT
+    sources:
+    - url: https://github.com/anthropics/skills.git
+      revision: 3b3fad96af16a10759d930941b4520ba0c40edae
+      license: Apache-2.0
+      license_path: skills/frontend-design/LICENSE.txt
+      license_sha256: 0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594
+      verified_at: '2026-08-22'
+      verified_by: agent:controller-01
+      adaptation: Selective frontend design-direction ideas only; no upstream code
+        copied.
+    - *id001
+- id: prototype-spike
+  path: .github/skills/prototype-spike/SKILL.md
+  sha256: 3927aed2dca8dc76d7d32a1b097fc8f955a60854b2d34ec9076903df7e1f91e2
+  provenance: *id002
+- id: implementation-minimality
+  path: .github/skills/implementation-minimality/SKILL.md
+  sha256: f2d4051e66c9ce8f63fe76c21c4b62589443eed83bc69eb9c3df19d9d93f0f1b
+  provenance:
+    origin: composite
+    license: MIT
+    sources:
+    - url: https://github.com/dietrichgebert/ponytail.git
+      revision: 2ed6c52c9d7e5e56942508591085fd45dea277d3
+      license: MIT
+      license_path: LICENSE
+      license_sha256: fb1bc6909ac3ef82d5c22106e32ef682b0cff66788fa915fb9b53b15c9d2f3ab
+      verified_at: '2026-08-22'
+      verified_by: agent:controller-01
+      adaptation: Adapted only the minimality ladder; plugin, hooks, modes, benchmark,
+        and runtime excluded.
+- id: visual-browser-qa
+  path: .github/skills/visual-browser-qa/SKILL.md
+  sha256: ff7c637aa64b0f64557a9ba5684dc1136a855bf983efa4ec9f0315219f1c798a
+  provenance:
+    origin: composite
+    license: MIT
+    sources:
+    - url: https://github.com/garrytan/gstack.git
+      revision: 85fd9db554ae4aaaa6d356d2daf873121ee85bdd
+      license: MIT
+      license_path: LICENSE
+      license_sha256: e56fbb5b3d95756f3fa1cfefa24732ec79f18ece1ad08a4e79e00df57e8b198c
+      verified_at: '2026-08-22'
+      verified_by: agent:controller-01
+      adaptation: Adapted report-only browser QA evidence patterns; auto-fix, auto-commit,
+        and runtime plumbing excluded.
+- id: skill-supply-chain-review
+  path: .github/skills/skill-supply-chain-review/SKILL.md
+  sha256: fef8d2a7761dc2c80e7f969ab1d61cfdd8e0cc81fec3de64e558a6e90a6972a6
+  provenance: *id002

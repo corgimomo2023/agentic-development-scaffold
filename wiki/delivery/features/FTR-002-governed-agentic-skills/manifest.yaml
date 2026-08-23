@@ -1,0 +1,176 @@
+schema_version: 1
+feature_id: FTR-002-governed-agentic-skills
+title: Governed Agentic Skills First Release
+lifecycle_state: RELEASE_READY
+status: IN_REVIEW
+version: 1
+artifacts:
+  proposal: feature.md
+  use_cases: use-cases.md
+  discovery: discovery.md
+  design: design.md
+  plan: plan.md
+  tasks: tasks.md
+  acceptance: acceptance.md
+  verification: verification.md
+  reviews: reviews.md
+  retrospective: retrospective.md
+  delegations: delegations.yaml
+  exceptions: exceptions.json
+adr_assessment:
+  required: false
+  rationale: No runtime or product architecture boundary changes; this adds a repository-governed
+    documentation catalog and extends the existing validator.
+owners:
+  orchestrator: agent:orchestrator-01
+  product_manager: human:alan
+  discovery_analyst: agent:discovery-analyst-01
+  architect: agent:architect-01
+  implementation_planner: agent:planner-01
+  implementer: agent:implementer-01
+  debugger: agent:debugger-01
+  test_specialist: agent:test-specialist-01
+  spec_reviewer: agent:spec-reviewer-01
+  quality_reviewer: agent:quality-reviewer-final-02
+  security_reviewer: agent:security-reviewer-final-02
+  accessibility_reviewer: agent:accessibility-reviewer-final-02
+  operational_readiness_reviewer: agent:operations-reviewer-final-01
+  verifier: agent:verifier-final-01
+  knowledge_curator: agent:knowledge-curator-01
+evidence:
+  tdd_cycles: tasks.md#task-001-tdd-evidence
+  full_suite: verification.md
+  verification: verification.md
+gates:
+  proposal:
+    owner: human:alan
+    checked_inputs: &id001
+    - feature.md
+    - use-cases.md
+    result: PASS
+    evidence: *id001
+    failure_reason: null
+    exception_id: null
+    next_transition: DISCOVERY
+  discovery:
+    owner: agent:discovery-analyst-01
+    checked_inputs: &id002
+    - discovery.md
+    result: PASS
+    evidence: *id002
+    failure_reason: null
+    exception_id: null
+    next_transition: DESIGN
+  design:
+    owner: agent:architect-01
+    checked_inputs: &id003
+    - design.md
+    - acceptance.md
+    result: PASS
+    evidence: *id003
+    failure_reason: null
+    exception_id: null
+    next_transition: PLANNED
+  plan:
+    owner: agent:planner-01
+    checked_inputs: &id004
+    - plan.md
+    - tasks.md
+    result: PASS
+    evidence: *id004
+    failure_reason: null
+    exception_id: null
+    next_transition: IMPLEMENTING
+  tdd:
+    owner: agent:implementer-01
+    checked_inputs: &id005
+    - tasks.md#task-001-tdd-evidence
+    result: PASS
+    evidence: *id005
+    failure_reason: null
+    exception_id: null
+    next_transition: SPEC_REVIEW
+  spec_review:
+    owner: agent:spec-reviewer-01
+    checked_inputs:
+    - reviews.md#spec-compliance-review
+    result: PASS
+    evidence:
+    - reviews.md#spec-compliance-review
+    failure_reason: null
+    exception_id: null
+    next_transition: QUALITY_SECURITY_REVIEW
+  quality_review:
+    owner: agent:quality-reviewer-final-02
+    checked_inputs:
+    - reviews.md#quality-review
+    result: PASS
+    evidence:
+    - reviews.md#quality-review
+    failure_reason: null
+    exception_id: null
+    next_transition: QUALITY_SECURITY_REVIEW
+  security_review:
+    owner: agent:security-reviewer-final-02
+    checked_inputs:
+    - reviews.md#security-review
+    result: PASS
+    evidence:
+    - reviews.md#security-review
+    failure_reason: null
+    exception_id: null
+    next_transition: VERIFYING
+  accessibility_review:
+    applicability: APPLICABLE
+    owner: agent:accessibility-reviewer-final-02
+    checked_inputs:
+    - reviews.md#accessibility-review
+    result: PASS
+    evidence:
+    - reviews.md#accessibility-review
+    failure_reason: null
+    exception_id: null
+    next_transition: VERIFYING
+    not_applicable_rationale: null
+  operational_readiness_review:
+    applicability: APPLICABLE
+    owner: agent:operations-reviewer-final-01
+    checked_inputs:
+    - reviews.md#operational-readiness-review
+    result: PASS
+    evidence:
+    - reviews.md#operational-readiness-review
+    failure_reason: null
+    exception_id: null
+    next_transition: VERIFYING
+    not_applicable_rationale: null
+  verification:
+    owner: agent:verifier-final-01
+    checked_inputs:
+    - verification.md
+    result: PASS
+    evidence:
+    - verification.md
+    failure_reason: null
+    exception_id: null
+    next_transition: RELEASE_READY
+  release:
+    owner: human:alan
+    checked_inputs: []
+    result: PENDING
+    evidence: []
+    failure_reason: null
+    exception_id: null
+    next_transition: RELEASED
+post_release:
+  released_revision: null
+  retrospective: retrospective.md
+  documentation_candidate_revision: null
+  knowledge_writeback: null
+  closure_evidence: null
+blocker:
+  reason: null
+  resolver: null
+  resume_state: null
+  evidence: []
+exceptions_file: exceptions.json
