@@ -37,6 +37,8 @@ If any required input is unavailable, label it `missing`; do not fabricate it.
 5. Model timeout, retry, idempotency, partial failure, and recovery.
 6. Compare alternatives by complexity, reversibility, risk, and cost.
 7. Identify ADR candidates and design validation steps.
+8. For user-facing scope, apply `ux-product-design` before the separate `frontend-design-direction` substage; preserve independent accessibility review.
+9. If one high-risk question needs a prototype, enforce `prototype-spike`: throwaway scope, evidence-only handoff, and new governed intake for retained code.
 
 ## Required output
 

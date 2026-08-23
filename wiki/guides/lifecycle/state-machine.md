@@ -2,14 +2,14 @@
 
 | State | Owner | Required exit evidence | Next |
 |---|---|---|---|
-| INTAKE | Orchestrator | problem, requester, constraints, source links | PROPOSAL |
+| INTAKE | Orchestrator | problem, requester, constraints, source links, spike/bounded/architectural sizing and escalation triggers | PROPOSAL |
 | PROPOSAL | Product manager | outcome, scope/non-goals, actors, risks, approval | DISCOVERY |
 | DISCOVERY | Discovery analyst / product manager | evidence packet, rules, unknowns, provenance; Knowledge curator persists approved evidence | DESIGN |
-| DESIGN | Architect | approved design, threat model, ADRs | PLANNED |
-| PLANNED | Planner | ordered vertical tasks and exact tests | IMPLEMENTING |
+| DESIGN | Architect | approved design, threat model, ADRs, conditional UX/frontend direction, and spike disposal evidence | PLANNED |
+| PLANNED | Planner | ordered vertical tasks, exact tests, and pre-implementation minimality evidence | IMPLEMENTING |
 | IMPLEMENTING | TDD developer | RED and GREEN evidence per task | SPEC_REVIEW |
 | SPEC_REVIEW | Independent spec reviewer | requirement-by-requirement PASS | QUALITY_SECURITY_REVIEW |
-| QUALITY_SECURITY_REVIEW | Independent quality, security, and triggered conditional reviewers | separate PASS verdicts plus accessibility and operational PASS or justified NOT_APPLICABLE | VERIFYING |
+| QUALITY_SECURITY_REVIEW | Independent quality, security, and triggered conditional reviewers | separate PASS verdicts, minimality recheck, report-only browser QA when triggered, plus accessibility and operational PASS or justified NOT_APPLICABLE | VERIFYING |
 | VERIFYING | Release verifier | canonical independent evidence | RELEASE_READY |
 | RELEASE_READY | Human approver | release and rollback approval | RELEASED |
 | RELEASED | Knowledge curator / product owner | retrospective, measured outcome, separate documentation-candidate write-back, closure evidence | CLOSED |

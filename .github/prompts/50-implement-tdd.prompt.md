@@ -32,11 +32,12 @@ If any required input is unavailable, label it `missing`; do not fabricate it.
 
 1. Read applicable instructions and inspect nearby patterns.
 2. Confirm baseline revision and unrelated failures.
-3. Write one focused behavior test before production code.
-4. Run it and capture a RED failure for the intended reason.
-5. Implement the smallest change needed for GREEN.
-6. Refactor without changing behavior.
-7. Run focused, regression, lint, build, and validator checks.
+3. Record `implementation-minimality` evidence before production code: existing seam -> standard library -> native capability -> installed dependency -> small direct implementation -> new abstraction/dependency last; never remove required controls.
+4. Write one focused behavior test before production code.
+5. Run it and capture a RED failure for the intended reason.
+6. Implement the smallest change needed for GREEN.
+7. Refactor without changing behavior.
+8. Run focused, regression, lint, build, and validator checks.
 
 ## Required output
 

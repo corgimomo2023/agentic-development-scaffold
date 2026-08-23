@@ -8,11 +8,12 @@
 
 ## Activities
 
-Capture the request, authority, constraints, sources, urgency, and ambiguity.
+Capture the request, authority, constraints, sources, urgency, and ambiguity. Apply `intake-sizing-and-escalation` to classify `spike`, `bounded`, or `architectural`; escalation is one-way and never skips lifecycle states. Invoke `brainstorm-and-converge` only when alternatives are genuinely unclear, and compare two or three approaches for architectural work.
 
 ## Required artifacts
 
 - Intake record and source links.
+- Sizing rationale, escalation triggers, and optional brainstorm/skip evidence.
 - Updated feature status and traceability links.
 - Gate record with owner and timestamp.
 

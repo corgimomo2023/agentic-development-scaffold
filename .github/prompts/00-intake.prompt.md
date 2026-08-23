@@ -32,9 +32,9 @@ If any required input is unavailable, label it `missing`; do not fabricate it.
 
 1. Read AGENTS.md and applicable repository instructions.
 2. Review supplied repository-state evidence and canonical indexes. If live Git state matters and is not supplied, dispatch an execute-capable verifier instead of claiming it was inspected.
-3. Classify the request as question, research, design, implementation, review, verification, or release.
+3. Classify request type, then use `.github/skills/intake-sizing-and-escalation/SKILL.md` to size it as `spike`, `bounded`, or `architectural`; escalation is one-way and cannot bypass lifecycle states.
 4. Separate desired outcome from proposed solution.
-5. Identify missing authority, evidence, environment, or acceptance criteria.
+5. Identify missing authority, evidence, environment, or acceptance criteria. Use `brainstorm-and-converge` only for real ambiguity; architectural work compares two or three approaches, while clear bugs/small bounded work records a skip rationale.
 6. Select the next legal lifecycle state and accountable role.
 7. Create the smallest self-contained dispatch packet.
 

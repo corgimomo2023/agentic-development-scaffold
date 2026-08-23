@@ -8,11 +8,12 @@
 
 ## Activities
 
-Create system design, threat model, failure handling, operations, rollback, and ADRs for consequential choices.
+Create system design, threat model, failure handling, operations, rollback, and ADRs for consequential choices. For user-facing scope, run `ux-product-design` and then `frontend-design-direction` as separate conditional DESIGN substages. Use `prototype-spike` only for one throwaway high-risk question; only its decision/evidence carries forward, and retained code restarts governed intake.
 
 ## Required artifacts
 
 - Approved design and adrs.
+- Conditional UX/frontend direction or concrete N/A rationale; spike disposal/re-intake evidence when applicable.
 - Updated feature status and traceability links.
 - Gate record with owner and timestamp.
 

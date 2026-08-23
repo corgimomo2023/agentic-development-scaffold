@@ -14,6 +14,7 @@ A public-safe, monorepo-ready software delivery scaffold for humans, GitHub Copi
 - `packages/`: shared libraries, schemas, components, SDKs, and tool configuration.
 - `wiki/`: the consolidated product knowledge control plane and its [canonical index](wiki/index.md).
 - `workflows/`: the complete delivery lifecycle, with entry/exit gates and evidence.
+- `.github/skills/manifest.yaml` and `skills.lock.yaml`: governed, vendor-neutral GitHub Copilot project-skill catalog and immutable provenance/integrity lock. GitHub documents `.github/skills` as a supported project-skill location; this location reference does not confer supply-chain trust on mutable content.
 - `scripts/validate_scaffold.py`: zero-dependency structural and safety validator.
 
 ## Start a project
@@ -26,6 +27,8 @@ A public-safe, monorepo-ready software delivery scaffold for humans, GitHub Copi
 6. Do not implement until proposal, design, plan, acceptance criteria, and required ADRs pass their gates.
 7. Use strict RED-GREEN-REFACTOR and preserve command output as verification evidence.
 8. Run `uv run --frozen --extra test python scripts/validate_scaffold.py` and `uv run --frozen --extra test pytest` before every PR.
+
+Before adding or upgrading any externally sourced skill, run the `skill-supply-chain-review` procedure and pin its public source, full commit, skill-level license, declared side effects, dependencies, update path, and rollback evidence. Sources are selectively adapted references, not vendored runtime code.
 
 ## Lifecycle
 
@@ -58,6 +61,7 @@ The design rationale and commit-pinned public repository comparison are recorded
 
 Official references:
 
+- [GitHub: agent skills and supported project-skill locations](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills)
 - [GitHub: repository custom instructions](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions)
 - [GitHub: custom agents for Copilot cloud agent](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/create-custom-agents)
 - [VS Code: prompt files](https://code.visualstudio.com/docs/agent-customization/prompt-files)

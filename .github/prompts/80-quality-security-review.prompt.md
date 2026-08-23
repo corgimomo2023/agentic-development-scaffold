@@ -34,10 +34,11 @@ If any required input is unavailable, label it `missing`; do not fabricate it.
 1. Verify the spec PASS applies to the exact revision.
 2. Dispatch code-reviewer and security-reviewer as independent packets.
 3. Add accessibility and operational reviewers when triggered by scope.
-4. Prevent reviewers from editing the candidate.
-5. Collect structured verdicts and evidence.
-6. Reject stale or revision-mismatched approvals.
-7. Return combined gate matrix without averaging failures.
+4. Require the existing quality reviewer to recheck `implementation-minimality`; do not create another reviewer. For browser-facing work, dispatch `visual-browser-qa` report-only with route/account/reproduction, desktop/mobile screenshots, console/network, forms/states, keyboard, and accessibility evidence.
+5. Prevent reviewers and browser QA from editing, fixing, or committing the candidate.
+6. Collect structured verdicts and evidence.
+7. Reject stale or revision-mismatched approvals.
+8. Return combined gate matrix without averaging failures.
 
 ## Required output
 
