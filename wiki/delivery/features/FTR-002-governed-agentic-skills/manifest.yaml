@@ -1,7 +1,7 @@
 schema_version: 1
 feature_id: FTR-002-governed-agentic-skills
 title: Governed Agentic Skills First Release
-lifecycle_state: VERIFYING
+lifecycle_state: RELEASE_READY
 status: IN_REVIEW
 version: 1
 artifacts:
@@ -146,9 +146,11 @@ gates:
     not_applicable_rationale: null
   verification:
     owner: agent:verifier-final-01
-    checked_inputs: []
-    result: PENDING
-    evidence: []
+    checked_inputs:
+    - verification.md
+    result: PASS
+    evidence:
+    - verification.md
     failure_reason: null
     exception_id: null
     next_transition: RELEASE_READY

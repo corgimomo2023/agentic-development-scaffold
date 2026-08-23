@@ -38,14 +38,16 @@
 | Final-blocker trust-boundary GREEN | Same focused trust-boundary command | All pass | 8 passed | 0 | tests/test_skills_validator.py | agent:implementer-final-blockers-01 | 2026-08-23T06:41:31Z | PASS |
 | Final-blocker attestation RED | Focused missing/malformed/path-escape attestation command | All new controls fail | 6 failed | 1 | tasks.md#task-009-tdd-evidence | agent:implementer-final-blockers-01 | 2026-08-23T06:41:31Z | PASS (RED proven) |
 | Final-blocker attestation GREEN | Same focused attestation command | All pass | 6 passed | 0 | tests/test_skills_validator.py | agent:implementer-final-blockers-01 | 2026-08-23T06:41:31Z | PASS |
+| Frozen revision replay | Clean `git archive` of `9c0bc9ca2a424657043f7319e67718e448948d1f`; canonical validator, focused/full suites, parsers, compile, diff and seven negative probes | Exact immutable tree passes | Tree `63a66e7b771d74284b6a787b3879ef49d0b139b4`; validator PASS; 36 focused, 108 full, 7 negative probes, 11 YAML and 4 JSON, 5 Python files | 0 | reviews.md#release-verification-handoff | agent:verifier-final-01 | 2026-08-23T07:01:38Z | PASS |
+| Exact-SHA GitHub CI | GitHub Actions `Validate scaffold / validate` for PR #5 head `9c0bc9ca2a424657043f7319e67718e448948d1f` | Required check succeeds for the verified SHA | SUCCESS | 0 | https://github.com/corgimomo2023/agentic-development-scaffold/actions/runs/32624509341/job/97157654286 | agent:verifier-final-01 | 2026-08-23T07:03:10Z | PASS |
 
 ## Environment
-- Reviewed revision: base `17d954fc7d08603e7075f407c40fbd40850ce521` plus uncommitted working tree; not yet a frozen review revision.
+- Reviewed revision: immutable commit `9c0bc9ca2a424657043f7319e67718e448948d1f`, tree `63a66e7b771d74284b6a787b3879ef49d0b139b4`, parent `17d954fc7d08603e7075f407c40fbd40850ce521`.
 - OS/runtime/dependencies: CI-aligned Python 3.11 environment via frozen uv lock.
 
 ## Known limitations
-- Canonical validator, focused/full pytest, parse, and diff-check evidence is recorded above for the uncommitted candidate.
-- Independent reviews and verifier replay remain pending until the candidate has a frozen identity.
+- The CI verifier intentionally does not re-download upstream license bytes; immutable source/license attestations are checked offline and were independently reverified before freeze.
+- This evidence writeback changes only the governed release record; the implementation payload remains the independently verified frozen tree above.
 
 ## Release decision
-PENDING. Requires separate spec, quality, security, conditional-review, and verification verdicts for the same frozen revision. Human owner retains merge and release authority.
+Verification PASS. Spec, quality, security, accessibility, operational-readiness, local frozen-revision and exact-SHA GitHub CI gates are green. The candidate is RELEASE_READY; human-authorized PR merge remains the release action.
