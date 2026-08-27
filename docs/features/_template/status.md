@@ -9,6 +9,8 @@
 - Next action: <one concrete action>
 - Blocker / human decision: none | <specific decision>
 
+> Update this file only when handing off, blocked, or PR-ready. Do not add a chronological agent activity log; GitHub Issue owns the live checklist and the PR owns command/review evidence.
+
 ## Links
 
 - Intent: [intent.md](intent.md)

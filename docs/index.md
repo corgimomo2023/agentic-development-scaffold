@@ -1,29 +1,22 @@
-# Wiki Index
+# Documentation index
 
-## Control plane
+## Delivery contract
 
 - [Agent contract](../AGENTS.md)
-- [Governed skills catalog](../.agents/skills/manifest.yaml)
-- [Governed skills schema](../.agents/skills/manifest.schema.json)
-- [Governed skills integrity lock](../skills.lock.yaml)
-- [Compilation schema](SCHEMA.md)
-- [Knowledge log](log.md)
-- [Raw evidence index](raw/index.md)
+- [Risk-lane workflows](../workflows/README.md)
+- [Feature documentation template](features/_template/README.md)
+- [GitHub Issue template](../.github/ISSUE_TEMPLATE/agent-task.yml)
+- [PR template](../.github/pull_request_template.md)
 
-## Durable areas
+## Product and architecture
 
-- [Product](product/README.md)
-- [Knowledge base](knowledge-base/index.md)
+- [Product overview](product/README.md)
+- [Stage / feature roadmap](product/roadmap.md)
 - [Architecture and ADRs](architecture/README.md)
-- [Delivery](delivery/README.md)
 - [Security governance](governance/security.md)
 
-## Lifecycle
+## Shared skills and sources
 
-- [Lifecycle overview](guides/lifecycle/README.md)
-- [State machine](guides/lifecycle/state-machine.md)
-- [Gates](guides/lifecycle/gates.md)
-- [Delegation](guides/lifecycle/delegation.md)
-- [Evidence](guides/lifecycle/evidence.md)
-- [Executable workflow guides](../workflows/README.md)
-- [Governed skill lifecycle insertions](../.agents/skills/manifest.yaml)
+- [Canonical skills catalog](../.agents/skills/manifest.yaml)
+- [Skill integrity lock](../skills.lock.yaml)
+- [Raw evidence index](raw/index.md)

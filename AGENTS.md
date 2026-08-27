@@ -5,10 +5,11 @@ This is a GitHub-first scaffold for AI-assisted delivery. Keep the default path 
 ## Source of truth
 
 1. Current human request and approval boundary.
-2. GitHub Issue for live scope and checklist.
-3. `docs/features/<id>/` for durable intent, plan, and handoff status.
-4. Accepted ADRs in `docs/architecture/decisions/` when a decision is consequential.
-5. Tests, public contracts, and this file.
+2. GitHub Issue for live scope and `[ ]` / `[x]` delivery checklist.
+3. `docs/product/roadmap.md` for human-owned Stage / POC feature acceptance.
+4. `docs/features/<id>/` for durable intent, plan, and handoff status.
+5. Accepted ADRs in `docs/architecture/decisions/` when a decision is consequential.
+6. Tests, public contracts, and this file.
 
 PRs hold the diff, review discussion, CI results, and merge decision. Do not copy them into `status.md`.
 
@@ -24,7 +25,7 @@ Do not turn optional capability into a default handoff. Human approval is always
 
 1. Read this file and the relevant Issue / `status.md` before editing.
 2. Use a branch and make the smallest useful change.
-3. For L1/L2, keep `intent.md`, `plan.md`, and `status.md` current. For L0, GitHub Issue and PR are normally enough.
+3. For L1/L2, update `intent.md` and `plan.md` when scope changes; update `status.md` only at a handoff, blocker, or PR-ready boundary. For L0, GitHub Issue and PR are normally enough.
 4. Add or update a relevant test for new behaviour or a bug. RED evidence is required only when it materially proves a regression or core-domain behaviour.
 5. Run the narrowest useful check, then the repository baseline when the scaffold changes:
    ```bash
@@ -39,7 +40,7 @@ Do not turn optional capability into a default handoff. Human approval is always
 - `docs/` is project documentation: features, architecture, governance, runbooks, and workflow rules.
 - `wiki/` is only a linked, reusable knowledge graph. Do not put live task state, CI logs, or copied PR checklists there.
 - Create an ADR only for a cross-feature, security/data/operations, costly-to-reverse decision with genuine alternatives.
-- `status.md` is a short resume bookmark: lane, state, links, last verified command, next action, and blocker/decision.
+- `status.md` is a short resume bookmark: lane, state, links, last verified command, next action, and blocker/decision. Do not append an action-by-action agent log; record live tasks in the Issue and execution evidence in the PR.
 
 ## Safety
 

@@ -23,6 +23,16 @@ body:
     validations:
       required: true
   - type: textarea
+    id: checklist
+    attributes:
+      label: Live task checklist
+      description: This is the authoritative task checklist. Update it as scope and completion change; do not duplicate it in a log file.
+      value: |
+        - [ ] <smallest verifiable task>
+        - [ ] <verification / review task>
+    validations:
+      required: true
+  - type: textarea
     id: acceptance
     attributes:
       label: Acceptance criteria and exact verification commands
