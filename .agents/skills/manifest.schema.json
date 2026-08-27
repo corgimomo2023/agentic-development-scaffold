@@ -132,7 +132,7 @@
         },
         "path": {
           "type": "string",
-          "pattern": "^\\.github/skills/[a-z0-9-]+/SKILL\\.md$"
+          "pattern": "^\\.agents/skills/[a-z0-9-]+/SKILL\\.md$"
         },
         "lifecycle_states": {
           "$ref": "#/$defs/nonEmptyStrings"

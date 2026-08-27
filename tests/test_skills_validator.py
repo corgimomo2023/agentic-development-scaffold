@@ -16,7 +16,7 @@ SPEC.loader.exec_module(VALIDATOR)
 
 
 def _write_catalog(root: Path) -> tuple[dict, dict]:
-    skill_path = root / ".github/skills/example-skill/SKILL.md"
+    skill_path = root / ".agents/skills/example-skill/SKILL.md"
     skill_path.parent.mkdir(parents=True)
     skill_path.write_text(
         "---\nname: example-skill\ndescription: Use when testing the governed skill catalog.\n---\n"
@@ -40,7 +40,7 @@ def _write_catalog(root: Path) -> tuple[dict, dict]:
         "skills": [
             {
                 "id": "example-skill",
-                "path": ".github/skills/example-skill/SKILL.md",
+                "path": ".agents/skills/example-skill/SKILL.md",
                 "lifecycle_states": ["INTAKE"],
                 "owning_agent": "orchestrator",
                 "triggers": ["A governed fixture is requested."],
@@ -64,14 +64,14 @@ def _write_catalog(root: Path) -> tuple[dict, dict]:
         "skills": [
             {
                 "id": "example-skill",
-                "path": ".github/skills/example-skill/SKILL.md",
+                "path": ".agents/skills/example-skill/SKILL.md",
                 "sha256": hashlib.sha256(skill_path.read_bytes()).hexdigest(),
                 "provenance": copy.deepcopy(manifest["skills"][0]["provenance"]),
             }
         ],
     }
-    (root / ".github/skills/manifest.yaml").write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
-    (root / ".github/skills/manifest.schema.json").write_text(
+    (root / ".agents/skills/manifest.yaml").write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+    (root / ".agents/skills/manifest.schema.json").write_text(
         '{"$schema":"https://json-schema.org/draft/2020-12/schema"}\n', encoding="utf-8"
     )
     (root / "skills.lock.yaml").write_text(yaml.safe_dump(lock, sort_keys=False), encoding="utf-8")
@@ -79,7 +79,7 @@ def _write_catalog(root: Path) -> tuple[dict, dict]:
 
 
 def _save(root: Path, manifest: dict, lock: dict) -> list[str]:
-    (root / ".github/skills/manifest.yaml").write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+    (root / ".agents/skills/manifest.yaml").write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
     (root / "skills.lock.yaml").write_text(yaml.safe_dump(lock, sort_keys=False), encoding="utf-8")
     return VALIDATOR.validate_skills(root)
 
@@ -104,7 +104,7 @@ def test_skills_catalog_rejects_mutable_external_revision(tmp_path):
 
 def test_skills_catalog_rejects_orphan_skill(tmp_path):
     manifest, lock = _write_catalog(tmp_path)
-    orphan = tmp_path / ".github/skills/orphan/SKILL.md"
+    orphan = tmp_path / ".agents/skills/orphan/SKILL.md"
     orphan.parent.mkdir()
     orphan.write_text("---\nname: orphan\ndescription: Orphan.\n---\n# Orphan\n", encoding="utf-8")
     assert any("orphan skill" in error for error in _save(tmp_path, manifest, lock))
@@ -112,16 +112,16 @@ def test_skills_catalog_rejects_orphan_skill(tmp_path):
 
 def test_skills_catalog_rejects_nested_orphan_skill(tmp_path):
     manifest, lock = _write_catalog(tmp_path)
-    orphan = tmp_path / ".github/skills/nested/escape/SKILL.md"
+    orphan = tmp_path / ".agents/skills/nested/escape/SKILL.md"
     orphan.parent.mkdir(parents=True)
     orphan.write_text("---\nname: escape\ndescription: Nested orphan.\n---\n# Escape\n", encoding="utf-8")
-    assert any("orphan skill .github/skills/nested/escape/SKILL.md" in error for error in _save(tmp_path, manifest, lock))
+    assert any("orphan skill .agents/skills/nested/escape/SKILL.md" in error for error in _save(tmp_path, manifest, lock))
 
 
 def test_skills_catalog_rejects_missing_manifest_declared_skill_file(tmp_path):
     manifest, lock = _write_catalog(tmp_path)
     (tmp_path / manifest["skills"][0]["path"]).unlink()
-    assert any("missing skill file .github/skills/example-skill/SKILL.md" in error for error in _save(tmp_path, manifest, lock))
+    assert any("missing skill file .agents/skills/example-skill/SKILL.md" in error for error in _save(tmp_path, manifest, lock))
 
 
 def test_skills_catalog_rejects_lock_entry_missing_sha256(tmp_path):
@@ -231,7 +231,7 @@ def test_skills_catalog_rejects_tool_not_owned_by_agent(tmp_path):
 
 
 def test_manifest_schema_agent_and_tool_enums_match_python_constants():
-    schema_path = VALIDATOR_PATH.parents[1] / ".github/skills/manifest.schema.json"
+    schema_path = VALIDATOR_PATH.parents[1] / ".agents/skills/manifest.schema.json"
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     properties = schema["$defs"]["skill"]["properties"]
 
@@ -240,7 +240,7 @@ def test_manifest_schema_agent_and_tool_enums_match_python_constants():
 
 
 def test_current_catalog_tools_are_known_and_owned():
-    manifest_path = VALIDATOR_PATH.parents[1] / ".github/skills/manifest.yaml"
+    manifest_path = VALIDATOR_PATH.parents[1] / ".agents/skills/manifest.yaml"
     manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
 
     assert len(manifest["skills"]) == 8
@@ -254,7 +254,7 @@ def test_skills_catalog_rejects_path_escape_and_lock_disagreement(tmp_path):
     manifest, lock = _write_catalog(tmp_path)
     manifest["skills"][0]["path"] = "../SKILL.md"
     errors = _save(tmp_path, manifest, lock)
-    assert any("path must equal .github/skills/<id>/SKILL.md" in error for error in errors)
+    assert any("path must equal .agents/skills/<id>/SKILL.md" in error for error in errors)
     assert any("lock/manifest disagreement" in error for error in errors)
 
 
@@ -262,7 +262,7 @@ def test_skills_catalog_rejects_absolute_manifest_path(tmp_path):
     manifest, lock = _write_catalog(tmp_path)
     manifest["skills"][0]["path"] = str((tmp_path / "outside/SKILL.md").resolve())
     errors = _save(tmp_path, manifest, lock)
-    assert any("path must equal .github/skills/<id>/SKILL.md" in error for error in errors)
+    assert any("path must equal .agents/skills/<id>/SKILL.md" in error for error in errors)
     assert any("lock/manifest disagreement" in error for error in errors)
 
 
@@ -285,7 +285,7 @@ def test_skills_catalog_rejects_canonical_symlink_with_matching_hash(tmp_path):
 
 def test_skills_catalog_rejects_canonical_skill_directory_symlink_with_matching_hash(tmp_path):
     manifest, lock = _write_catalog(tmp_path)
-    canonical = tmp_path / ".github/skills/example-skill"
+    canonical = tmp_path / ".agents/skills/example-skill"
     external = tmp_path.parent / f"{tmp_path.name}-external-skill"
     external.mkdir()
     external_skill = external / "SKILL.md"
@@ -311,7 +311,7 @@ def test_skills_catalog_rejects_orphan_skill_directory_symlink(tmp_path):
         "---\nname: orphan\ndescription: External orphan.\n---\n# Orphan\n",
         encoding="utf-8",
     )
-    orphan = tmp_path / ".github/skills/orphan"
+    orphan = tmp_path / ".agents/skills/orphan"
     try:
         orphan.symlink_to(external, target_is_directory=True)
     except (NotImplementedError, OSError) as exc:
@@ -319,27 +319,27 @@ def test_skills_catalog_rejects_orphan_skill_directory_symlink(tmp_path):
 
     errors = _save(tmp_path, manifest, lock)
 
-    assert any("symlinked skill directory .github/skills/orphan" in error for error in errors)
+    assert any("symlinked skill directory .agents/skills/orphan" in error for error in errors)
 
 
 def test_skills_catalog_discovery_rejects_broken_skill_symlink(tmp_path):
     manifest, lock = _write_catalog(tmp_path)
-    broken = tmp_path / ".github/skills/orphan/SKILL.md"
+    broken = tmp_path / ".agents/skills/orphan/SKILL.md"
     broken.parent.mkdir()
     try:
         broken.symlink_to(tmp_path / "does-not-exist/SKILL.md")
     except (NotImplementedError, OSError) as exc:
         pytest.skip(f"symlinks unavailable on this platform: {exc}")
 
-    assert any("symlinked skill .github/skills/orphan/SKILL.md" in error for error in _save(tmp_path, manifest, lock))
+    assert any("symlinked skill .agents/skills/orphan/SKILL.md" in error for error in _save(tmp_path, manifest, lock))
 
 
 @pytest.mark.parametrize(
     ("relative_path", "diagnostic"),
     [
         ("skills.lock.yaml", "skills.lock.yaml"),
-        (".github/skills/manifest.yaml", "manifest.yaml"),
-        (".github/skills/manifest.schema.json", "manifest.schema.json"),
+        (".agents/skills/manifest.yaml", "manifest.yaml"),
+        (".agents/skills/manifest.schema.json", "manifest.schema.json"),
     ],
 )
 def test_skills_catalog_rejects_symlinked_control_file_before_read(tmp_path, relative_path, diagnostic):
@@ -360,7 +360,7 @@ def test_skills_catalog_rejects_symlinked_control_file_before_read(tmp_path, rel
 
 def test_skills_catalog_rejects_symlinked_catalog_root_before_read(tmp_path):
     _write_catalog(tmp_path)
-    catalog = tmp_path / ".github/skills"
+    catalog = tmp_path / ".agents/skills"
     external = tmp_path.parent / f"{tmp_path.name}-skills"
     catalog.rename(external)
     try:
@@ -370,22 +370,22 @@ def test_skills_catalog_rejects_symlinked_catalog_root_before_read(tmp_path):
 
     errors = VALIDATOR.validate_skills(tmp_path)
 
-    assert any("symlink" in error and ".github/skills" in error for error in errors)
+    assert any("symlink" in error and ".agents/skills" in error for error in errors)
 
 
 def test_skills_catalog_rejects_symlinked_catalog_path_component(tmp_path):
     _write_catalog(tmp_path)
-    github = tmp_path / ".github"
-    external = tmp_path.parent / f"{tmp_path.name}-github"
-    github.rename(external)
+    agents = tmp_path / ".agents"
+    external = tmp_path.parent / f"{tmp_path.name}-agents"
+    agents.rename(external)
     try:
-        github.symlink_to(external, target_is_directory=True)
+        agents.symlink_to(external, target_is_directory=True)
     except (NotImplementedError, OSError) as exc:
         pytest.skip(f"symlinks unavailable on this platform: {exc}")
 
     errors = VALIDATOR.validate_skills(tmp_path)
 
-    assert any("symlink" in error and ".github" in error for error in errors)
+    assert any("symlink" in error and ".agents" in error for error in errors)
 
 
 def test_skills_catalog_rejects_non_regular_lock_node(tmp_path):

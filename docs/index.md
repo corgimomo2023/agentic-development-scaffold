@@ -3,8 +3,8 @@
 ## Control plane
 
 - [Agent contract](../AGENTS.md)
-- [Governed skills catalog](../.github/skills/manifest.yaml)
-- [Governed skills schema](../.github/skills/manifest.schema.json)
+- [Governed skills catalog](../.agents/skills/manifest.yaml)
+- [Governed skills schema](../.agents/skills/manifest.schema.json)
 - [Governed skills integrity lock](../skills.lock.yaml)
 - [Compilation schema](SCHEMA.md)
 - [Knowledge log](log.md)
@@ -26,4 +26,4 @@
 - [Delegation](guides/lifecycle/delegation.md)
 - [Evidence](guides/lifecycle/evidence.md)
 - [Executable workflow guides](../workflows/README.md)
-- [Governed skill lifecycle insertions](../.github/skills/manifest.yaml)
+- [Governed skill lifecycle insertions](../.agents/skills/manifest.yaml)

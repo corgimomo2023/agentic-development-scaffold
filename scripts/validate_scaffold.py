@@ -39,8 +39,8 @@ REQUIRED = {
     "wiki/governance/exception-policy.md",
     "wiki/governance/security.md",
     "wiki/governance/traceability-policy.md",
-    ".github/skills/manifest.schema.json",
-    ".github/skills/manifest.yaml",
+    ".agents/skills/manifest.schema.json",
+    ".agents/skills/manifest.yaml",
     "skills.lock.yaml",
     "wiki/delivery/templates/feature/manifest.yaml",
     "wiki/delivery/templates/feature/discovery.md",
@@ -1172,11 +1172,11 @@ def _validate_skill_provenance(provenance: object, label: str) -> list[str]:
 
 def _validate_skills_control_plane(root: Path) -> list[str]:
     """Admit catalog control paths before any parse or content read."""
-    catalog_root = root / ".github/skills"
+    catalog_root = root / ".agents/skills"
     for path, label in (
         (root, "."),
-        (root / ".github", ".github"),
-        (catalog_root, ".github/skills"),
+        (root / ".agents", ".agents"),
+        (catalog_root, ".agents/skills"),
     ):
         if path.is_symlink():
             return [f"symlinked catalog path component {label} is not allowed"]
@@ -1185,8 +1185,8 @@ def _validate_skills_control_plane(root: Path) -> list[str]:
 
     errors: list[str] = []
     for path, label in (
-        (catalog_root / "manifest.yaml", ".github/skills/manifest.yaml"),
-        (catalog_root / "manifest.schema.json", ".github/skills/manifest.schema.json"),
+        (catalog_root / "manifest.yaml", ".agents/skills/manifest.yaml"),
+        (catalog_root / "manifest.schema.json", ".agents/skills/manifest.schema.json"),
         (root / "skills.lock.yaml", "skills.lock.yaml"),
     ):
         if path.is_symlink():
@@ -1203,7 +1203,7 @@ def validate_skills(root: Path = ROOT) -> list[str]:
     errors = _validate_skills_control_plane(root)
     if errors:
         return errors
-    manifest_path = root / ".github/skills/manifest.yaml"
+    manifest_path = root / ".agents/skills/manifest.yaml"
     lock_path = root / "skills.lock.yaml"
     try:
         manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
@@ -1242,9 +1242,9 @@ def validate_skills(root: Path = ROOT) -> list[str]:
             errors.append(f"{label}: id must be lowercase kebab-case")
             continue
         manifest_by_id.setdefault(skill_id, skill)
-        expected_path = f".github/skills/{skill_id}/SKILL.md"
+        expected_path = f".agents/skills/{skill_id}/SKILL.md"
         if skill_path != expected_path:
-            errors.append(f"{label}: path must equal .github/skills/<id>/SKILL.md")
+            errors.append(f"{label}: path must equal .agents/skills/<id>/SKILL.md")
         lifecycle_states = skill.get("lifecycle_states")
         if not isinstance(lifecycle_states, list) or not lifecycle_states:
             errors.append(f"{label}: lifecycle_states must be a non-empty list")
@@ -1286,7 +1286,7 @@ def validate_skills(root: Path = ROOT) -> list[str]:
 
         if skill_path == expected_path:
             file_path = root / expected_path
-            catalog_root = root / ".github/skills"
+            catalog_root = root / ".agents/skills"
             skill_dir = file_path.parent
             symlink_components: list[Path] = []
             for component in (catalog_root, skill_dir, file_path):
@@ -1319,7 +1319,7 @@ def validate_skills(root: Path = ROOT) -> list[str]:
                         or not resolved_file.is_relative_to(resolved_root)
                     )
                 ):
-                    errors.append(f"{label}: resolved skill file {expected_path} escapes .github/skills or repository root")
+                    errors.append(f"{label}: resolved skill file {expected_path} escapes .agents/skills or repository root")
                     resolved_file = None
                 if resolved_file is not None:
                     safe_skill_files[expected_path] = file_path
@@ -1374,14 +1374,14 @@ def validate_skills(root: Path = ROOT) -> list[str]:
         if locked.get("path") != skill.get("path") or locked.get("provenance") != skill.get("provenance"):
             errors.append(f"lock/manifest disagreement for {skill_id}")
         path_value = skill.get("path")
-        if isinstance(path_value, str) and path_value == f".github/skills/{skill_id}/SKILL.md":
+        if isinstance(path_value, str) and path_value == f".agents/skills/{skill_id}/SKILL.md":
             file_path = safe_skill_files.get(path_value)
             if file_path is not None:
                 actual = hashlib.sha256(file_path.read_bytes()).hexdigest()
                 if locked.get("sha256") != actual:
                     errors.append(f"{skill_id}: hash mismatch")
 
-    catalog_root = root / ".github/skills"
+    catalog_root = root / ".agents/skills"
     if not catalog_root.is_symlink() and catalog_root.is_dir():
         for entry in catalog_root.iterdir():
             if entry.is_symlink():

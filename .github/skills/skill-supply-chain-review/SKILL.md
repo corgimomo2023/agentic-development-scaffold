@@ -27,7 +27,7 @@ Runs before external skill changes are approved in proposal/design and before th
 5. Inspect direct and transitive dependencies plus lock/install behavior.
 6. Compare requested capabilities with the minimum selective adaptation; reject unrelated runtime plumbing and auto-mutation.
 7. Define bounded update, verification, rollback, and removal procedures.
-8. Record PASS/FAIL findings before editing `.github/skills/manifest.yaml` or `skills.lock.yaml`.
+8. Record PASS/FAIL findings before editing `.agents/skills/manifest.yaml` or `skills.lock.yaml`.
 
 ## Outputs and evidence
 - Source URL, pinned revision, license, artifact hashes, risk inventory, accepted/rejected scope, dependency analysis, update plan, rollback plan, and reviewer verdict.
