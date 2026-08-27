@@ -1408,275 +1408,42 @@ def validate_skills(root: Path = ROOT) -> list[str]:
 
 
 def main() -> int:
+    """Validate the lightweight scaffold contract and public-repository safety."""
     failures: list[str] = []
-    for name in sorted(REQUIRED):
+    required = {
+        "AGENTS.md", "README.md", ".github/copilot-instructions.md",
+        ".github/workflows/validate-scaffold.yml", "docs/README.md",
+        "docs/features/_template/intent.md", "docs/features/_template/plan.md",
+        "docs/features/_template/status.md", "workflows/low-risk.md",
+        "workflows/standard.md", "workflows/elevated.md",
+    }
+    for name in sorted(required):
         if not (ROOT / name).is_file():
-            failures.append(f"missing required file: {name}")
-
-    failures.extend(validate_skills(ROOT))
-    schema_path = ROOT / ".github/skills/manifest.schema.json"
-    if not schema_path.is_symlink() and schema_path.is_file():
-        try:
-            schema = json.loads(schema_path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            failures.append(f".github/skills/manifest.schema.json: invalid JSON: {exc.msg}")
-        else:
-            if not isinstance(schema, dict) or schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
-                failures.append(".github/skills/manifest.schema.json: must declare JSON Schema draft 2020-12")
-
-    for symlink in find_repository_symlinks(ROOT):
-        failures.append(f"repository symlink is not allowed: {symlink.as_posix()}")
-
-    for name in LEGACY_ROOT_PATHS:
-        if (ROOT / name).exists():
-            failures.append(f"legacy root path must not exist: {name}")
-
-    text_files = collect_text_files()
-    for path, text in text_files:
-        rel = path.relative_to(ROOT)
-        for label in find_forbidden(text):
-            failures.append(f"{rel}: forbidden {label}")
-
-    markdown = [(path, text) for path, text in text_files if path.suffix == ".md"]
-    for path, text in markdown:
-        rel = path.relative_to(ROOT)
-        if not text.strip():
-            failures.append(f"{rel}: empty Markdown file")
-        failures.extend(validate_links(path, text))
-
-    agents = sorted((ROOT / ".github/agents").glob("*.agent.md"))
-    agent_names = {path.name.removesuffix(".agent.md") for path in agents}
-    if agent_names != set(AGENT_TOOLS):
-        failures.append("custom agent catalog must exactly match the governed role matrix")
-    for path in agents:
-        try:
-            metadata, body = parse_frontmatter(path)
-        except ValueError as exc:
-            failures.append(f"{path.relative_to(ROOT)}: {exc}")
-            continue
-        if metadata.get("name") != path.name.removesuffix(".agent.md"):
-            failures.append(f"{path.relative_to(ROOT)}: name must match filename")
-        if not metadata.get("description"):
-            failures.append(f"{path.relative_to(ROOT)}: description is required")
-        expected_tools = AGENT_TOOLS.get(path.name.removesuffix(".agent.md"))
-        expected_tools_text = repr(list(expected_tools)) if expected_tools is not None else None
-        if metadata.get("tools") != expected_tools_text:
-            failures.append(f"{path.relative_to(ROOT)}: tools must match governed least-privilege matrix")
-        if len(body.splitlines()) < 60:
-            failures.append(f"{path.relative_to(ROOT)}: agent contract must be at least 60 lines")
-        for heading in AGENT_HEADINGS:
-            if heading not in body:
-                failures.append(f"{path.relative_to(ROOT)}: missing {heading}")
-    prompts = sorted((ROOT / ".github/prompts").glob("*.prompt.md"))
-    prompt_names = {path.name.removesuffix(".prompt.md") for path in prompts}
-    if prompt_names != set(PROMPT_AGENTS):
-        failures.append("lifecycle prompt catalog must exactly match the governed prompt matrix")
-    for path in prompts:
-        try:
-            metadata, body = parse_frontmatter(path)
-        except ValueError as exc:
-            failures.append(f"{path.relative_to(ROOT)}: {exc}")
-            continue
-        prompt_name = path.name.removesuffix(".prompt.md")
-        if metadata.get("name") != prompt_name:
-            failures.append(f"{path.relative_to(ROOT)}: name must match filename")
-        for key in ("description", "argument-hint", "agent"):
-            if not metadata.get(key):
-                failures.append(f"{path.relative_to(ROOT)}: {key} is required")
-        if metadata.get("agent") != PROMPT_AGENTS.get(prompt_name):
-            failures.append(f"{path.relative_to(ROOT)}: agent must match governed prompt-role matrix")
-        for heading in PROMPT_HEADINGS:
-            if heading not in body:
-                failures.append(f"{path.relative_to(ROOT)}: missing {heading}")
-        if len(body.splitlines()) < 40:
-            failures.append(f"{path.relative_to(ROOT)}: prompt contract must be at least 40 lines")
-
-    instructions = sorted((ROOT / ".github/instructions").glob("*.instructions.md"))
-    instruction_names = {path.name.removesuffix(".instructions.md") for path in instructions}
-    if instruction_names != INSTRUCTIONS:
-        failures.append("path-specific instruction catalog must exactly match the governed matrix")
-    for path in instructions:
-        try:
-            metadata, _ = parse_frontmatter(path)
-        except ValueError as exc:
-            failures.append(f"{path.relative_to(ROOT)}: {exc}")
-            continue
-        if not metadata.get("applyTo"):
-            failures.append(f"{path.relative_to(ROOT)}: applyTo is required")
-
-    for path in sorted((ROOT / "workflows").glob("[0-9][0-9]-*.md")):
-        body = path.read_text(encoding="utf-8")
-        for heading in WORKFLOW_HEADINGS:
-            if heading not in body:
-                failures.append(f"{path.relative_to(ROOT)}: missing {heading}")
-
-    features_root = ROOT / "wiki/delivery/features"
-    for feature_dir in sorted(path for path in features_root.iterdir() if path.is_dir()):
-        package_files = {path.name for path in feature_dir.iterdir() if path.is_file()}
-        missing_package_files = sorted(FEATURE_PACKAGE_FILES - package_files)
-        if missing_package_files:
-            failures.append(
-                f"{feature_dir.relative_to(ROOT)}: incomplete feature package; missing "
-                + ", ".join(missing_package_files)
-            )
-        manifest = feature_dir / "manifest.yaml"
-        exceptions = feature_dir / "exceptions.json"
-        if not manifest.is_file():
-            failures.append(f"{feature_dir.relative_to(ROOT)}: missing manifest.yaml")
-        if not exceptions.is_file():
-            failures.append(f"{feature_dir.relative_to(ROOT)}: missing exceptions.json")
+            failures.append(f"missing required path: {name}")
+    if any((ROOT / "workflows").glob("[0-9][0-9]-*.md")):
+        failures.append("numbered lifecycle workflow guides are retired; use three risk lanes")
+    contract = (ROOT / "AGENTS.md").read_text(encoding="utf-8") if (ROOT / "AGENTS.md").is_file() else ""
+    for marker in ("L0 — low risk", "L1 — standard", "L2 — elevated", "GitHub Issue", "Human approval"):
+        if marker not in contract:
+            failures.append(f"AGENTS.md: missing lightweight workflow marker {marker!r}")
+    for error in validate_skills(ROOT):
+        failures.append(f"skills: {error}")
+    ignored = {".git", ".venv", ".pytest_cache", "__pycache__"}
+    for path in ROOT.rglob("*"):
+        if not path.is_file() or any(part in ignored for part in path.parts):
             continue
         try:
-            records = json.loads(exceptions.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            failures.append(f"{exceptions.relative_to(ROOT)}: invalid JSON: {exc.msg}")
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
             continue
-        for error in validate_exception_records(records):
-            failures.append(f"{exceptions.relative_to(ROOT)}: {error}")
-        if manifest.is_file():
-            try:
-                manifest_data = yaml.safe_load(manifest.read_text(encoding="utf-8"))
-            except yaml.YAMLError as exc:
-                failures.append(f"{manifest.relative_to(ROOT)}: invalid YAML: {exc}")
-            else:
-                for error in validate_manifest_data(manifest_data, records, feature_dir):
-                    failures.append(f"{manifest.relative_to(ROOT)}: {error}")
-
-    example_package = ROOT / "examples/feature-package"
-    example_files = {path.name for path in example_package.iterdir() if path.is_file()}
-    if example_files != FEATURE_PACKAGE_FILES:
-        failures.append("examples/feature-package: files must exactly match the feature package matrix")
-    try:
-        example_records = json.loads((example_package / "exceptions.json").read_text(encoding="utf-8"))
-        example_manifest = yaml.safe_load((example_package / "manifest.yaml").read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, yaml.YAMLError, OSError) as exc:
-        failures.append(f"examples/feature-package: invalid manifest or exceptions: {exc}")
-    else:
-        for error in validate_exception_records(example_records):
-            failures.append(f"examples/feature-package/exceptions.json: {error}")
-        for error in validate_manifest_data(example_manifest, example_records, example_package):
-            failures.append(f"examples/feature-package/manifest.yaml: {error}")
-
-    template_package = ROOT / "wiki/delivery/templates/feature"
-    try:
-        template_manifest = yaml.safe_load((template_package / "manifest.yaml").read_text(encoding="utf-8"))
-    except (yaml.YAMLError, OSError) as exc:
-        failures.append(f"wiki/delivery/templates/feature/manifest.yaml: invalid YAML: {exc}")
-    else:
-        for error in validate_manifest_data(template_manifest, [], template_package):
-            failures.append(f"wiki/delivery/templates/feature/manifest.yaml: {error}")
-
-    roles_contract = (ROOT / "wiki/guides/lifecycle/roles.md").read_text(encoding="utf-8")
-    state_machine = (ROOT / "wiki/guides/lifecycle/state-machine.md").read_text(encoding="utf-8")
-    for role in CANONICAL_ROLE_LABELS:
-        if f"| {role} |" not in roles_contract:
-            failures.append(f"wiki/guides/lifecycle/roles.md: missing canonical role {role}")
-    if "| DISCOVERY | Discovery analyst / product manager |" not in state_machine:
-        failures.append("wiki/guides/lifecycle/state-machine.md: discovery ownership is inconsistent")
-    if "Knowledge curator persists" not in state_machine:
-        failures.append("wiki/guides/lifecycle/state-machine.md: discovery persistence handoff is missing")
-
-    review_paths = [
-        ROOT / "wiki/delivery/templates/feature/reviews.md",
-        ROOT / "examples/feature-package/reviews.md",
-        *(path / "reviews.md" for path in features_root.iterdir() if path.is_dir()),
-    ]
-
-    for path in review_paths:
-        if not path.is_file():
-            continue
-        text = path.read_text(encoding="utf-8")
-        for heading in ("## Accessibility review", "## Operational readiness review"):
-            if heading not in text:
-                failures.append(f"{path.relative_to(ROOT)}: missing {heading}")
-        if "PASS, FAIL, or NOT_APPLICABLE" not in text:
-            failures.append(f"{path.relative_to(ROOT)}: conditional verdict contract is missing")
-
-    contract = (ROOT / "AGENTS.md").read_text(encoding="utf-8") if (ROOT / "AGENTS.md").exists() else ""
-    copilot_contract = (ROOT / ".github/copilot-instructions.md").read_text(encoding="utf-8") if (ROOT / ".github/copilot-instructions.md").exists() else ""
-    instruction_catalog = (ROOT / ".github/instructions/README.md").read_text(encoding="utf-8") if (ROOT / ".github/instructions/README.md").exists() else ""
-    if CANONICAL_LIFECYCLE not in contract or CANONICAL_LIFECYCLE not in copilot_contract:
-        failures.append("AGENTS.md and Copilot instructions must share the canonical lifecycle string")
-    source_orders = {
-        "AGENTS.md": (
-            contract,
-            ("Human instruction", "Approved feature package", "Accepted ADRs", "This root `AGENTS.md`", "Executable tests", "Reusable templates"),
-        ),
-        ".github/copilot-instructions.md": (
-            copilot_contract,
-            ("current human request", "Approved feature package", "Accepted ADRs", "Root `AGENTS.md`", "Existing executable tests", "Reusable templates"),
-        ),
-        ".github/instructions/README.md": (
-            instruction_catalog,
-            ("Current human instruction", "Approved feature package", "Accepted ADRs", "Root `AGENTS.md`", "Executable tests", "Reusable templates"),
-        ),
-    }
-    for label, (text, markers) in source_orders.items():
-        positions = [text.find(marker) for marker in markers]
-        if -1 in positions or positions != sorted(positions):
-            failures.append(f"{label}: source-of-truth order must match AGENTS.md")
-    source_sections = {
-        "AGENTS.md": (contract, "Source-of-truth order"),
-        ".github/copilot-instructions.md": (copilot_contract, "Source-of-truth hierarchy"),
-        ".github/instructions/README.md": (instruction_catalog, "Precedence"),
-    }
-    for label, (text, heading) in source_sections.items():
-        match = re.search(
-            rf"^## {re.escape(heading)}\s*$\n(?P<body>.*?)(?=^## |\Z)",
-            text,
-            re.MULTILINE | re.DOTALL,
-        )
-        numbers = re.findall(r"^(\d+)\.\s", match.group("body"), re.MULTILINE) if match else []
-        if numbers != ["1", "2", "3", "4", "5", "6"]:
-            failures.append(f"{label} source hierarchy must contain exactly the canonical six numbered layers")
-    specificity_texts = [contract, copilot_contract, instruction_catalog]
-    specificity_texts.extend(path.read_text(encoding="utf-8") for path in agents)
-    if any("narrowest applicable" in text.lower() or "most specific" in text.lower() for text in specificity_texts):
-        failures.append("instruction and agent contracts must stop on conflict instead of selecting by path specificity")
-    for phrase in (
-        "RED evidence",
-        "Spec-compliance reviewer",
-        "dispatch packet",
-        "Human authority",
-        "different assignments",
-        "named human approver",
-    ):
-        if phrase.lower() not in contract.lower():
-            failures.append(f"AGENTS.md: missing contract phrase {phrase!r}")
-
-    retrospective_prompt = (ROOT / ".github/prompts/95-retrospective.prompt.md").read_text(encoding="utf-8")
-    retrospective_workflow = (ROOT / "workflows/90-retrospective.md").read_text(encoding="utf-8")
-    knowledge_prompt = (ROOT / ".github/prompts/97-knowledge-writeback.prompt.md").read_text(encoding="utf-8")
-    if "Knowledge-writeback handoff packet" not in retrospective_prompt or "do not update canonical knowledge" not in retrospective_prompt:
-        failures.append("95-retrospective: must finish with a handoff packet without canonical writeback")
-    if "Write durable learning through the knowledge curator" in retrospective_prompt or "Knowledge-writeback references" in retrospective_prompt:
-        failures.append("95-retrospective: must not perform knowledge writeback before completion")
-    if "Do not mutate canonical knowledge" not in retrospective_workflow or "next required step is `97-knowledge-writeback`" not in retrospective_workflow:
-        failures.append("workflows/90-retrospective.md: must hand off to 97 without closing")
-    if "Next permitted state: `CLOSED`" in retrospective_workflow:
-        failures.append("workflows/90-retrospective.md: closure belongs after knowledge writeback")
-    for phrase in ("completed retrospective", "documentation-only candidate", "released revision"):
-        if phrase.lower() not in knowledge_prompt.lower():
-            failures.append(f"97-knowledge-writeback: missing post-retrospective protection {phrase!r}")
-
-    workflow_text = (ROOT / ".github/workflows/validate-scaffold.yml").read_text(encoding="utf-8")
-    dependabot_text = (ROOT / ".github/dependabot.yml").read_text(encoding="utf-8")
-    if "pip install" in workflow_text or "uv sync --frozen --extra test" not in workflow_text:
-        failures.append("validation workflow must install only the frozen lockfile dependency set")
-    if "uv run --frozen --extra test" not in workflow_text:
-        failures.append("validation workflow commands must preserve the frozen lockfile")
-    if dependabot_text.count("default-days: 7") != 2:
-        failures.append("Dependabot ecosystems require a seven-day cooldown")
-
+        for forbidden in find_forbidden(text):
+            failures.append(f"{path.relative_to(ROOT)}: {forbidden}")
     if failures:
-        print("VALIDATION FAIL")
-        for failure in failures:
+        print("VALIDATION FAILED:")
+        for failure in sorted(set(failures)):
             print(f"- {failure}")
         return 1
-    print(
-        f"VALIDATION PASS: {len(markdown)} Markdown files and "
-        f"{len(text_files)} text files checked"
-    )
+    print("VALIDATION PASS: lightweight risk-lane contract and public safety checked")
     return 0
 
 

@@ -1,3 +1,9 @@
-# Executable Lifecycle Guides
+# Risk-lane workflows
 
-Run phases in numeric order. Each guide defines entry criteria, activities, required artifacts, exit evidence, and failure transitions. The orchestrator records the active state in the feature package and cannot skip a phase without a documented human waiver.
+Choose the lowest lane that still controls the real risk. These are default paths, not a role-assignment engine.
+
+- [L0 — low risk](low-risk.md)
+- [L1 — standard](standard.md)
+- [L2 — elevated](elevated.md)
+
+GitHub Issue is the live task checklist. GitHub PR is the review, CI, and merge record. `docs/features/<id>/status.md` is only the durable resume point.
