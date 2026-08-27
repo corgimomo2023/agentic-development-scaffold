@@ -10,7 +10,8 @@ def test_lightweight_scaffold_paths_exist():
         ".github/copilot-instructions.md",
         ".github/workflows/validate-scaffold.yml",
         "docs/README.md",
-        "docs/features/_template/intent.md",
+        "docs/features/active.md",
+        "docs/features/_template/feature.md",
         "docs/features/_template/plan.md",
         "docs/features/_template/status.md",
         "workflows/low-risk.md",
@@ -37,7 +38,7 @@ def test_agent_contract_is_github_first_and_human_governed():
 
 def test_feature_template_is_a_short_handoff_not_a_manifest():
     template = ROOT / "docs/features/_template"
-    assert {path.name for path in template.iterdir() if path.is_file()} == {"README.md", "intent.md", "plan.md", "status.md"}
+    assert {path.name for path in template.iterdir() if path.is_file()} == {"README.md", "feature.md", "plan.md", "status.md"}
     status = (template / "status.md").read_text(encoding="utf-8")
     for marker in ("Lane:", "State:", "Last verified:", "Next action:", "Blocker / human decision:"):
         assert marker in status

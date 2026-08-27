@@ -4,6 +4,7 @@
 
 - [Agent contract](../AGENTS.md)
 - [Risk-lane workflows](../workflows/README.md)
+- [Active features](features/active.md)
 - [Feature documentation template](features/_template/README.md)
 - [GitHub Issue template](../.github/ISSUE_TEMPLATE/agent-task.yml)
 - [PR template](../.github/pull_request_template.md)

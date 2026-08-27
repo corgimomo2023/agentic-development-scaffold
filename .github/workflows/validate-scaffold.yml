@@ -32,6 +32,8 @@ jobs:
         run: uv sync --frozen --extra test
       - name: Verify generated Copilot skill mirror
         run: python scripts/sync_vendor_skills.py --check
+      - name: Verify generated active feature index
+        run: python scripts/sync_active_features.py --check
       - name: Validate structure and public safety
         run: uv run --frozen --extra test python scripts/validate_scaffold.py
       - name: Run tests

@@ -1413,7 +1413,7 @@ def main() -> int:
     required = {
         "AGENTS.md", "README.md", ".github/copilot-instructions.md",
         ".github/workflows/validate-scaffold.yml", "docs/README.md",
-        "docs/features/_template/intent.md", "docs/features/_template/plan.md",
+        "docs/features/active.md", "docs/features/_template/feature.md", "docs/features/_template/plan.md",
         "docs/features/_template/status.md", "workflows/low-risk.md",
         "workflows/standard.md", "workflows/elevated.md",
     }

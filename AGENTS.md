@@ -25,7 +25,7 @@ Do not turn optional capability into a default handoff. Human approval is always
 
 1. Read this file and the relevant Issue / `status.md` before editing.
 2. Use a branch and make the smallest useful change.
-3. For L1/L2, update `intent.md` and `plan.md` when scope changes; update `status.md` only at a handoff, blocker, or PR-ready boundary. For L0, GitHub Issue and PR are normally enough.
+3. For L1/L2, update `feature.md` and `plan.md` when scope changes; update `status.md` only at a handoff, blocker, or PR-ready boundary. For L0, GitHub Issue and PR are normally enough.
 4. Add or update a relevant test for new behaviour or a bug. RED evidence is required only when it materially proves a regression or core-domain behaviour.
 5. Run the narrowest useful check, then the repository baseline when the scaffold changes:
    ```bash
