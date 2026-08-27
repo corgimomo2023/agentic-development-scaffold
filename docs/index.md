@@ -3,6 +3,7 @@
 ## Delivery contract
 
 - [Agent contract](../AGENTS.md)
+- [Agentic AI workflow map](workflows/agentic-ai-workflow.md)
 - [Risk-lane workflows](../workflows/README.md)
 - [Active features](features/active.md)
 - [Feature documentation template](features/_template/README.md)

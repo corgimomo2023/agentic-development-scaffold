@@ -10,6 +10,7 @@ def test_lightweight_scaffold_paths_exist():
         ".github/copilot-instructions.md",
         ".github/workflows/validate-scaffold.yml",
         "docs/README.md",
+        "docs/workflows/agentic-ai-workflow.md",
         "docs/features/active.md",
         "docs/features/_template/feature.md",
         "docs/features/_template/plan.md",
